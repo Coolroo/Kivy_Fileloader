@@ -37,8 +37,18 @@ def saveDFs(path, dataFrames):
     newHDF.close()
 
 def HDFtoDict(path):
-    HDFFile = read_hdf(path)
-    DataDict = {}
-    for key in HDFFile.keys():
-        DataDict[key] = HDFFile[key]
-    return DataDict
+    """
+    The HDFtoDict function reads in an HDF file and returns a dictionary of the data contained within.
+       The function takes one argument, path, which is the location of the HDF file to be read.
+    
+    :param path: Used to specify the path to the HDF file.
+    :return: a dictionary with the keys being the group names and the values being a list of all.
+    
+    :doc-author: Trelent
+    """
+    with HDFStore(path) as keyFile:
+        keys = keyFile.keys()
+        DataDict = {}
+        for key in keys:
+            DataDict[key] = read_hdf(path, key=key)
+        return DataDict

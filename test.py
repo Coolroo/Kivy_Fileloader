@@ -19,6 +19,7 @@ class ConverterApp(MDApp):
         :return: the dataframe of the file that was loaded.
         :doc-author: Trelent
         """
+        print("in LoadFile")
         try:
             file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]]) 
             literalFile = fileLoading.loadFile(file[0])
@@ -39,6 +40,7 @@ class ConverterApp(MDApp):
         :return: the path of the file that is being saved.
         :doc-author: Trelent
         """
+        print("In saveLoadedFiles")
         try:
             file = filechooser.save_file(filters = ["*.hdf"])
             print(file)
@@ -46,7 +48,7 @@ class ConverterApp(MDApp):
             fileLoading.saveDFs(filePath, self.files)
             self.loadedFile.text = "Successfully saved loaded dataframes to " + filePath
             self.loadedFile.color = [0,1,0,1]
-        except IOError:
+        except:
             self.loadedFile.text = "COULD NOT SAVE FILE"
             self.loadedFile.color = [1,0,0,1]
         
@@ -60,9 +62,11 @@ class ConverterApp(MDApp):
         :return: the filePath, which we can use to call the HDFtoDict function.
         :doc-author: Trelent
         """
+        print("in openHDF")
         try:
             filePath = filechooser.open_file(filters=["*.hdf"])
-            self.files = fileLoading.HDFtoDict(filePath)
+            print("File path is " + filePath[0])
+            self.files = fileLoading.HDFtoDict(filePath[0])
             self.loadedFile.color = [0,1,0,1]
             self.loadedFIle.text = 'Successfully loaded HDF file'
             self.numFiles.text = "Number of files loaded = " + str(len(self.files))
@@ -73,6 +77,10 @@ class ConverterApp(MDApp):
     def build(self):
         self.files = {}
         screen = MDScreen()
+        self.toolbar = MDToolbar(title="File")
+        self.toolbar.pos_hint = {"top" : 1}
+        self.toolbar.left_action_items = [["content-save", lambda x : self.saveLoadedFiles(None)], ["folder-open", lambda x : self.loadFile(None)], ["folder-open", lambda x : self.openHDF(None)]]
+        screen.add_widget(self.toolbar)
         screen.add_widget(MDFillRoundFlatButton(
             text="LOAD FILE",
             font_size = 17,
