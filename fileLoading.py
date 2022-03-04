@@ -12,11 +12,13 @@ def loadFile(path):
     """
     file_name = os.path.basename(path)
     file_extension = os.path.splitext(file_name)[1][1:]
-    file = None
+    file = {"file": None, "fileType": None}
     if file_extension == "csv":
-        file = read_csv(path)
+        file["file"] = read_csv(path)
+        file["fileType"] = "csv"
     elif file_extension.find("xls") >= 0:
-        file = read_excel(path)
+        file["file"] = read_excel(path)
+        file["fileType"] = "Excel"
     else:
         raise TypeError()
     return file
