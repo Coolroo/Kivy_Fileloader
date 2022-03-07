@@ -57,3 +57,14 @@ class Controller:
         :doc-author: Trelent
         """
         self.loadedFiles = {}
+    
+    def save(self):
+        files = {}
+        try:
+            with self as loadedFiles:
+                for file in loadedFiles.keys():
+                    files[file] = files[file]["file"]
+            fileLoading.saveDFs(files)
+            return 1
+        except:
+            return 0

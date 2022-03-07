@@ -42,7 +42,7 @@ Builder.load_string(
                 MDToolbar:
                     title: "Loaded Files"
                     md_bg_color: 1, 0, 0, 1
-                    on_action_button: lambda x: root.getFile()
+                    on_action_button: lambda x: root.loadFile()
                     type: "top"
                     type_height: "small"
                     mode: "free-center"
@@ -82,7 +82,7 @@ class FileRow(OneLineIconListItem):
 
 
 class FileList(Screen):
-    def getFile(self):
+    def loadFile(self):
         global controller
         """
         The loadFile function is used to load a file into the program.
@@ -92,10 +92,7 @@ class FileList(Screen):
         :return: the dataframe of the file that was loaded.
         :doc-author: Trelent
         """
-        filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]], on_selection=self.loadFile)
-
-
-    def loadFile(self, file):
+        file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]])
         if file:
             returnVal = controller.loadFile(file[0])
             if returnVal > 0:
@@ -105,9 +102,16 @@ class FileList(Screen):
                 self.list_files()
                 return
         Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
-        
-
-        Snackbar(text="Could not load file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+    
+    def saveFile(self):
+        global controller
+        file = filechooser.save_file(filters = [["HDF File", "*.hdf"]])
+        if file:
+            returnVal = controller.save()
+            if returnVal:
+                Snackbar(text="Successfully Saved File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+            else:
+                Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
 
     def list_files(self, text=""):
         global controller
@@ -142,7 +146,7 @@ class MainApp(MDApp):
             "text": "Load File",
             "icon": "folder",
             "height": dp(40),
-            "on_press": lambda : self.screen.getFile(),
+            "on_press": lambda : self.screen.loadFile(),
             "on_release": lambda : self.closeMenu()
         },
         {
@@ -150,7 +154,7 @@ class MainApp(MDApp):
             "text": "Save Project",
             "icon": "content-save",
             "height": dp(40),
-            "on_press": lambda : self.screen.getFile(),
+            "on_press": lambda : self.screen.saveFile(),
             "on_release": lambda : self.closeMenu()
         },
         ]
