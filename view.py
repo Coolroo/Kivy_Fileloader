@@ -5,16 +5,12 @@ from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
 from kivy.metrics import dp
 
-from kivymd.icon_definitions import md_icons
 from kivymd.app import MDApp
 from kivymd.uix.list import OneLineIconListItem
 from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.datatables import MDDataTable
-from kivy.uix.anchorlayout import AnchorLayout
+from kivymd.uix.snackbar import Snackbar
 
 from plyer import filechooser
-import fileLoading
-import os
 
 controller = Controller()
 Builder.load_string(
@@ -40,15 +36,17 @@ Builder.load_string(
 
             MDBoxLayout:
                 orientation: 'vertical'
+                size_hint_x: None
+                width: root.width/3
                 
                 MDToolbar:
                     title: "Loaded Files"
                     md_bg_color: 1, 0, 0, 1
-                    on_action_button: lambda x: root.loadFile()
+                    on_action_button: lambda x: root.getFile()
                     type: "top"
                     type_height: "small"
                     mode: "free-center"
-                    round: dp(1)
+                    round: dp(80)
                     anchor_title: "center"
                     font_size: 16
 
@@ -84,7 +82,7 @@ class FileRow(OneLineIconListItem):
 
 
 class FileList(Screen):
-    def loadFile(self):
+    def getFile(self):
         global controller
         """
         The loadFile function is used to load a file into the program.
@@ -94,13 +92,22 @@ class FileList(Screen):
         :return: the dataframe of the file that was loaded.
         :doc-author: Trelent
         """
-        print("in LoadFile")
-        filePath = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]])
-        print(f'File is at {filePath[0]}')
-        returnVal = controller.loadFile(filePath[0])
-        if returnVal == 2:
-            pass
-        self.list_files()
+        filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]], on_selection=self.loadFile)
+
+
+    def loadFile(self, file):
+        if file:
+            returnVal = controller.loadFile(file[0])
+            if returnVal > 0:
+                if returnVal == 2:
+                    pass
+                Snackbar(text="Successfully Loaded File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                self.list_files()
+                return
+        Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+        
+
+        Snackbar(text="Could not load file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
 
     def list_files(self, text=""):
         global controller
@@ -112,7 +119,7 @@ class FileList(Screen):
                     "viewclass": "FileRow",
                     "text": filePath,
                     "icon": fileAssociation[file["fileType"]],
-                    "callback": lambda x: x
+                    "callback": lambda x : x
                 }
             )
 
@@ -122,18 +129,6 @@ class FileList(Screen):
             for file in fileKeys:
                 add_file(files[file], file)
 
-    def load_table(self):
-        layout = self.ids.dataTableLayout
-        self.dataTable = MDDataTable(
-            pos_hint={'center_y': 0.5, 'center_x': 0.5},
-            size_hint=(0.9,0.6),
-            column_data=[("No.", dp(30))],
-            row_data=[("Row No.")]
-        )
-        layout.add_widget(self.dataTable)
-
-    def on_enter(self):
-        self.load_table()
 
 
 class MainApp(MDApp):
@@ -143,23 +138,36 @@ class MainApp(MDApp):
 
     def build(self):
         menu_items = [{
-            "viewclass": "OneLineListItem",
+            "viewclass": "FileRow",
             "text": "Load File",
-            "height": dp(30),
-            "on_press": lambda : self.screen.loadFile(),
+            "icon": "folder",
+            "height": dp(40),
+            "on_press": lambda : self.screen.getFile(),
             "on_release": lambda : self.closeMenu()
-        }]
+        },
+        {
+            "viewclass": "FileRow",
+            "text": "Save Project",
+            "icon": "content-save",
+            "height": dp(40),
+            "on_press": lambda : self.screen.getFile(),
+            "on_release": lambda : self.closeMenu()
+        },
+        ]
         self.menu= MDDropdownMenu(
             items=menu_items,
-            width_mult=2,
+            width_mult=3
         )
+
+        file_menu_items = [
+            {
+                "viewclass": "OneLineListItem"
+            }]
         return self.screen
 
     def on_start(self):
         self.screen.list_files()
 
-    def on_enter(self):
-        self.load_table()
     
     def loadMenu(self, button):
         self.menu.caller = button
