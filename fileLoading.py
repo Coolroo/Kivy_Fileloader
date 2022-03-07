@@ -1,5 +1,5 @@
 from argparse import FileType
-from pandas import read_csv, read_excel, HDFStore, read_hdf
+from pandas import read_csv, read_excel, HDFStore, read_hdf, ExcelFile
 import os
 
 def loadFile(path):
@@ -12,12 +12,13 @@ def loadFile(path):
     """
     file_name = os.path.basename(path)
     file_extension = os.path.splitext(file_name)[1][1:]
+    print(f'File_Extension = {file_extension}')
     file = {"file": None, "fileType": None}
     if file_extension == "csv":
         file["file"] = read_csv(path)
         file["fileType"] = "csv"
     elif file_extension.find("xls") >= 0:
-        file["file"] = read_excel(path)
+        file["file"] = read_excel(path, None)
         file["fileType"] = "Excel"
     else:
         raise TypeError()

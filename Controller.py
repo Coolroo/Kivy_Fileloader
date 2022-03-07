@@ -1,37 +1,52 @@
 
 import fileLoading
+import os
 
 class Controller:
     
     def __init__(self):
         self.loadedFiles = {}
 
-
-    def getLoadedFiles(self):
+    def __enter__(self):
         return self.loadedFiles
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def __iter__(self):
+        keys = self.loadedFiles.keys()
+        for key in keys:
+            yield self.loadedFiles[key]
+    
+    def __getitem__(self, key):
+        return self.loadedFiles[key]
     
     def loadFile(self, filePath):
         """
-        The loadFile function loads a file from the specified path and places it into the loadedFiles dictionary
-        It returns True if it succeeds and False if it fails.
+        The loadFile function loads a file into memory and returns the data in a dictionary.
+            The function takes one argument, the path to the file to be loaded.
+            It returns 1 if successful and 0 if not.
         
-        :param self: Used to Refer to the object itself.
-        :param filePath: Used to Specify the path to the file that is being loaded.
-        :return: True if the file was loaded successfully.
+        :param self: Used to Access variables that belongs to the class.
+        :param filePath: Used to Store the filepath of the file that is being loaded.
+        :return: A 1 if the file was loaded successfully, a 2 if there are multiple sheets in an excel file and a 0 if it failed.
         
         :doc-author: Trelent
         """
         try:
             newFile = fileLoading.loadFile(filePath)
-            self.loadedFiles[filePath] = newFile
-            print(f'Successfully loaded file at path {filePath}')
-            return True
+            print("test")
+            self.loadedFiles[os.path.splitext(os.path.basename(filePath))[0]] = newFile
+            if newFile["fileType"] == "Excel" and len(newFile["file"].keys()) > 1:
+                return 2
+            print(f'Successfully loaded file')
+            return 1
         except IOError:
-            print(f'Error loading file at path {filePath}, IOError occured')
-            return False
+            print(f'Error loading file, IOError occured')
+            return 0
         except TypeError:
-            print(f'The type of file specified at the path {filePath} is not supported')
-            return False
+            print(f'The type of file specified is not supported')
+            return 0
     
     def clearLoadedFiles(self):
         """
