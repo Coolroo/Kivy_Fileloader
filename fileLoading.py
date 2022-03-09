@@ -24,7 +24,7 @@ def loadFile(path):
         raise TypeError()
     return file
 
-def saveDFs(path, dataFrames, workFrame):
+def saveDFs(path, dataFrames):
     """
     The saveDFs function saves a dictionary of dataframes to an HDF5 file.
     
@@ -50,9 +50,9 @@ def HDFtoDict(path):
     
     :doc-author: Trelent
     """
-    with HDFStore(path) as keyFile:
+    with HDFStore(path, mode='r') as keyFile:
         keys = keyFile.keys()
         DataDict = {}
-        for key in keys:
-            DataDict[key] = read_hdf(path, key=key)
+        for sheet in keys:
+            DataDict[sheet] = read_hdf(path, key=sheet)
         return DataDict

@@ -1,5 +1,6 @@
 from Controller import Controller
 
+from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
@@ -9,6 +10,8 @@ from kivymd.app import MDApp
 from kivymd.uix.list import OneLineIconListItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
 
 from plyer import filechooser
 
@@ -16,6 +19,17 @@ controller = Controller()
 Builder.load_string(
     '''
 #:import images_path kivymd.images_path
+
+<ImportFile>
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
+
+    MDTextField:
+        id: fileName
+        hint_text: "File Name"
+
 
 <FileRow>
     IconLeftWidget:
@@ -76,6 +90,8 @@ Builder.load_string(
 '''
 )
 
+class ImportFile(BoxLayout):
+    pass
 
 class FileRow(OneLineIconListItem):
     icon = StringProperty()
@@ -94,6 +110,7 @@ class FileList(Screen):
         """
         file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]])
         if file:
+            #self.showImportDialog()
             returnVal = controller.loadFile(file[0])
             if returnVal > 0:
                 if returnVal == 2:
@@ -107,11 +124,13 @@ class FileList(Screen):
         global controller
         file = filechooser.save_file(filters = [["HDF File", "*.hdf"]])
         if file:
-            returnVal = controller.save()
+            returnVal = controller.save(file[0])
             if returnVal:
                 Snackbar(text="Successfully Saved File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                print("Successfully loaded file!")
             else:
                 Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                print("Could not save file!")
 
     def list_files(self, text=""):
         global controller
@@ -132,6 +151,38 @@ class FileList(Screen):
             fileKeys = files.keys()
             for file in fileKeys:
                 add_file(files[file], file)
+    
+    def loadProject(self):
+        global controller
+        file = filechooser.open_file(filters = [["HDF File (*.hdf)", "*.hdf"]])
+        if file:
+            returnVal = controller.loadProject(file)
+            if returnVal:
+                Snackbar(text="Successfully Loaded Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+            else:
+                Snackbar(text="Could not Load Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+    
+    def showImportDialog(self):
+        if not self.importDialog:
+            self.importDialog = MDDialog(
+            title="Please select a name for the imported file",
+            type="custom",
+            content_cls=ImportFile(),
+            buttons=[
+                    MDFlatButton(
+                        text="CANCEL",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                    ),
+                    MDFlatButton(
+                        text="OK",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=self.setNameOfFile()
+                    ),
+                ],
+            )
+        self.importDialog.open()
 
 
 
@@ -157,16 +208,19 @@ class MainApp(MDApp):
             "on_press": lambda : self.screen.saveFile(),
             "on_release": lambda : self.closeMenu()
         },
+        {
+            "viewclass": "FileRow",
+            "text": "Load Project",
+            "icon": "folder-open",
+            "height": dp(40),
+            "on_press": lambda : self.screen.loadProject(),
+            "on_release": lambda : self.closeMenu()
+        },
         ]
         self.menu= MDDropdownMenu(
             items=menu_items,
             width_mult=3
         )
-
-        file_menu_items = [
-            {
-                "viewclass": "OneLineListItem"
-            }]
         return self.screen
 
     def on_start(self):

@@ -2,6 +2,12 @@
 import fileLoading
 import os
 
+def checkForExt(filePath, ext):
+    if os.path.splitext(os.path.basename(filePath))[1][1:] != ext:
+        return filePath + f'.{ext}'
+    else:
+        return filePath
+
 class Controller:
     
     def __init__(self):
@@ -58,13 +64,24 @@ class Controller:
         """
         self.loadedFiles = {}
     
-    def save(self):
+    def save(self, filePath):
+        filePath = checkForExt(filePath, "hdf")
+        print(f'Attempting save at {filePath}')
         files = {}
         try:
-            with self as loadedFiles:
-                for file in loadedFiles.keys():
-                    files[file] = files[file]["file"]
-            fileLoading.saveDFs(files)
+            for file in self.loadedFiles.keys():
+                files[file] = files[file]["file"]
+            fileLoading.saveDFs(filePath, files)
             return 1
         except:
             return 0
+        
+
+    def loadProject(self, filePath):
+        try:
+            newDataFrames = fileLoading.HDFtoDict(filePath)
+            self.loadedFiles = newDataFrames
+            return 1
+        except:
+            return 0
+    
