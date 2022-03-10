@@ -27,7 +27,7 @@ class Controller:
     def __getitem__(self, key):
         return self.loadedFiles[key]
     
-    def loadFile(self, filePath):
+    def loadFile(self, filePath, fileName):
         """
         The loadFile function loads a file into memory and returns the data in a dictionary.
             The function takes one argument, the path to the file to be loaded.
@@ -42,9 +42,12 @@ class Controller:
         try:
             newFile = fileLoading.loadFile(filePath)
             print("test")
-            self.loadedFiles[os.path.splitext(os.path.basename(filePath))[0]] = newFile
-            if newFile["fileType"] == "Excel" and len(newFile["file"].keys()) > 1:
-                return 2
+            self.loadedFiles[fileName] = newFile
+            if newFile["fileType"] == "Excel":
+                if len(newFile["file"].sheet_names) > 1:
+                    return 2
+                else:
+                    newFile["file"] = newFile["file"].parse(newFile["file"].sheet_names[0])
             print(f'Successfully loaded file')
             return 1
         except IOError:
@@ -69,19 +72,20 @@ class Controller:
         print(f'Attempting save at {filePath}')
         files = {}
         try:
-            for file in self.loadedFiles.keys():
-                files[file] = files[file]["file"]
-            fileLoading.saveDFs(filePath, files)
+            fileLoading.saveDFs(filePath, self.loadedFiles)
             return 1
-        except:
+        except IOError:
             return 0
         
 
     def loadProject(self, filePath):
+        print(f'Trying to get HDF file at path {filePath}')
         try:
             newDataFrames = fileLoading.HDFtoDict(filePath)
             self.loadedFiles = newDataFrames
             return 1
-        except:
+        except AttributeError:
             return 0
     
+    def getLoadedFile(self, fileName):
+        return self.loadedFiles[fileName]

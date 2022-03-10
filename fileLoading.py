@@ -36,7 +36,8 @@ def saveDFs(path, dataFrames):
     keys = dataFrames.keys()
     newHDF = HDFStore(path, mode='w')
     for key in keys:
-        newHDF.put(key, dataFrames[key])
+        newHDF.put(key, dataFrames[key]["file"])
+        newHDF.get_storer(key).attrs.fileType=dataFrames[key]["fileType"]
     newHDF.flush()
     newHDF.close()
 
@@ -50,9 +51,13 @@ def HDFtoDict(path):
     
     :doc-author: Trelent
     """
-    with HDFStore(path, mode='r') as keyFile:
-        keys = keyFile.keys()
-        DataDict = {}
-        for sheet in keys:
-            DataDict[sheet] = read_hdf(path, key=sheet)
-        return DataDict
+    keyFile = HDFStore(path=path)
+    keys = keyFile.keys()
+    DataDict = {}
+    for key in keys:
+        sheet = key[1:]
+        DataDict[sheet] = {}
+        DataDict[sheet]["file"] = keyFile[sheet]
+        DataDict[sheet]["fileType"] = keyFile.get_storer(sheet).attrs.fileType
+    keyFile.close()
+    return DataDict

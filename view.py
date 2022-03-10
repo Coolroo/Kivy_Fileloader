@@ -12,8 +12,11 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
+from kivymd.uix.textfield import MDTextField
+from kivy.app import App
 
 from plyer import filechooser
+import keyword
 
 controller = Controller()
 Builder.load_string(
@@ -27,8 +30,8 @@ Builder.load_string(
     height: "120dp"
 
     MDTextField:
-        id: fileName
-        hint_text: "File Name"
+        id: dialogTextBox
+        hint_text: "File Name (No special characters, only numbers and letters)"
 
 
 <FileRow>
@@ -55,7 +58,7 @@ Builder.load_string(
                 
                 MDToolbar:
                     title: "Loaded Files"
-                    md_bg_color: 1, 0, 0, 1
+                    md_bg_color: self.theme_cls.accent_dark
                     on_action_button: lambda x: root.loadFile()
                     type: "top"
                     type_height: "small"
@@ -82,7 +85,7 @@ Builder.load_string(
 
                 MDToolbar:
                     title: "Load Data"
-                    md_bg_color: 0, 1, 0, 1
+                    md_bg_color: self.theme_cls.accent_color
                     type: "top"
                 AnchorLayout:
                     id: "dataTableLayout"
@@ -98,6 +101,10 @@ class FileRow(OneLineIconListItem):
 
 
 class FileList(Screen):
+
+    importDialog = None
+    buttonDisabled=True
+
     def loadFile(self):
         global controller
         """
@@ -111,15 +118,8 @@ class FileList(Screen):
         file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]])
         if file:
             #self.showImportDialog()
-            returnVal = controller.loadFile(file[0])
-            if returnVal > 0:
-                if returnVal == 2:
-                    pass
-                Snackbar(text="Successfully Loaded File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
-                self.list_files()
-                return
-        Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
-    
+            self.showImportDialog(file[0])
+
     def saveFile(self):
         global controller
         file = filechooser.save_file(filters = [["HDF File", "*.hdf"]])
@@ -127,7 +127,7 @@ class FileList(Screen):
             returnVal = controller.save(file[0])
             if returnVal:
                 Snackbar(text="Successfully Saved File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
-                print("Successfully loaded file!")
+                print("Successfully saved file!")
             else:
                 Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
                 print("Could not save file!")
@@ -156,29 +156,51 @@ class FileList(Screen):
         global controller
         file = filechooser.open_file(filters = [["HDF File (*.hdf)", "*.hdf"]])
         if file:
-            returnVal = controller.loadProject(file)
+            returnVal = controller.loadProject(file[0])
             if returnVal:
                 Snackbar(text="Successfully Loaded Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
             else:
                 Snackbar(text="Could not Load Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+        self.list_files()
+
     
-    def showImportDialog(self):
+    def showImportDialog(self, filePath):
+        global controller
+
+        def closeDialog(button):
+            self.importDialog.dismiss()
+
+        def finishLoad(button):
+            fileName = self.importDialog.content_cls.ids.dialogTextBox.text
+            returnVal = controller.loadFile(filePath, fileName)
+            self.importDialog.dismiss()
+            if returnVal > 0:
+                if returnVal == 2:
+                    pass
+                Snackbar(text="Successfully Loaded File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                self.list_files()
+                return
+            Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+
+
         if not self.importDialog:
             self.importDialog = MDDialog(
             title="Please select a name for the imported file",
             type="custom",
             content_cls=ImportFile(),
+            auto_dismiss=False,
             buttons=[
                     MDFlatButton(
                         text="CANCEL",
                         theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_press=closeDialog
                     ),
                     MDFlatButton(
                         text="OK",
                         theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
-                        on_release=self.setNameOfFile()
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_release=finishLoad,
                     ),
                 ],
             )
@@ -216,11 +238,20 @@ class MainApp(MDApp):
             "on_press": lambda : self.screen.loadProject(),
             "on_release": lambda : self.closeMenu()
         },
+        {
+            "viewclass": "FileRow",
+            "text": "Change Theme",
+            "icon": "border-color",
+            "height": dp(40),
+            "on_press": lambda : self.screen.loadProject(),
+            "on_release": lambda : self.closeMenu()
+        },
         ]
         self.menu= MDDropdownMenu(
             items=menu_items,
             width_mult=3
         )
+        self.importDialogDisabled=True
         return self.screen
 
     def on_start(self):
