@@ -13,7 +13,7 @@ def loadFile(path):
     file_name = os.path.basename(path)
     file_extension = os.path.splitext(file_name)[1][1:]
     print(f'File_Extension = {file_extension}')
-    file = {"file": None, "fileType": None}
+    file = {"file": None, "fileType": None, "fileName": file_name}
     if file_extension == "csv":
         file["file"] = read_csv(path)
         file["fileType"] = "csv"
@@ -38,6 +38,7 @@ def saveDFs(path, dataFrames):
     for key in keys:
         newHDF.put(key, dataFrames[key]["file"])
         newHDF.get_storer(key).attrs.fileType=dataFrames[key]["fileType"]
+        newHDF.get_storer(key).attrs.fileName=dataFrames[key]["fileName"]
     newHDF.flush()
     newHDF.close()
 
@@ -59,5 +60,6 @@ def HDFtoDict(path):
         DataDict[sheet] = {}
         DataDict[sheet]["file"] = keyFile[sheet]
         DataDict[sheet]["fileType"] = keyFile.get_storer(sheet).attrs.fileType
+        DataDict[sheet]["fileName"] = keyFile.get_storer(sheet).attrs.fileName
     keyFile.close()
     return DataDict

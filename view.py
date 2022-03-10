@@ -5,15 +5,17 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
 from kivy.metrics import dp
+from kivy.app import App
+
 
 from kivymd.app import MDApp
-from kivymd.uix.list import OneLineIconListItem
+from kivymd.uix.list import OneLineIconListItem, IconLeftWidget
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.textfield import MDTextField
-from kivy.app import App
+from kivymd.uix.tooltip import MDTooltip
 
 from plyer import filechooser
 import keyword
@@ -22,6 +24,7 @@ controller = Controller()
 Builder.load_string(
     '''
 #:import images_path kivymd.images_path
+<TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
 <ImportFile>
     orientation: "vertical"
@@ -34,9 +37,17 @@ Builder.load_string(
         hint_text: "File Name (No special characters, only numbers and letters)"
 
 
-<FileRow>
+<OptionRow>
     IconLeftWidget:
         icon: root.icon
+
+<FileRow>
+    TooltipIconLeftWidget:
+        icon: root.icon
+        tooltip_text: root.originalPath
+        pos_hint: {"center_x": .5, "center_y": .5}
+
+        
 
 
 <FileList>
@@ -94,11 +105,18 @@ Builder.load_string(
 '''
 )
 
+class TooltipLeftIconWidget(IconLeftWidget, MDTooltip):
+    pass
+
 class ImportFile(BoxLayout):
     pass
 
+class OptionRow(OneLineIconListItem):
+    icon = StringProperty()
+
 class FileRow(OneLineIconListItem):
     icon = StringProperty()
+    originalPath = StringProperty()
 
 
 class FileList(Screen):
@@ -143,7 +161,7 @@ class FileList(Screen):
                     "viewclass": "FileRow",
                     "text": filePath,
                     "icon": fileAssociation[file["fileType"]],
-                    "callback": lambda x : x
+                    "originalPath": file["fileName"],
                 }
             )
 
@@ -216,7 +234,7 @@ class MainApp(MDApp):
 
     def build(self):
         menu_items = [{
-            "viewclass": "FileRow",
+            "viewclass": "OptionRow",
             "text": "Load File",
             "icon": "folder",
             "height": dp(40),
@@ -224,7 +242,7 @@ class MainApp(MDApp):
             "on_release": lambda : self.closeMenu()
         },
         {
-            "viewclass": "FileRow",
+            "viewclass": "OptionRow",
             "text": "Save Project",
             "icon": "content-save",
             "height": dp(40),
@@ -232,17 +250,9 @@ class MainApp(MDApp):
             "on_release": lambda : self.closeMenu()
         },
         {
-            "viewclass": "FileRow",
+            "viewclass": "OptionRow",
             "text": "Load Project",
             "icon": "folder-open",
-            "height": dp(40),
-            "on_press": lambda : self.screen.loadProject(),
-            "on_release": lambda : self.closeMenu()
-        },
-        {
-            "viewclass": "FileRow",
-            "text": "Change Theme",
-            "icon": "border-color",
             "height": dp(40),
             "on_press": lambda : self.screen.loadProject(),
             "on_release": lambda : self.closeMenu()
