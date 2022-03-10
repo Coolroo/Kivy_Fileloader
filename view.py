@@ -84,9 +84,10 @@ Builder.load_string(
                 orientation: 'vertical'
 
                 MDToolbar:
-                    title: "Load Data"
+                    title: "Data"
                     md_bg_color: self.theme_cls.accent_color
                     type: "top"
+                    anchor_title: "center"
                 AnchorLayout:
                     id: "dataTableLayout"
                 
