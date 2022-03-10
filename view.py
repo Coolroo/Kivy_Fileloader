@@ -42,6 +42,7 @@ Builder.load_string(
         icon: root.icon
 
 <FileRow>
+    on_release: self.createDropDown()
     TooltipIconLeftWidget:
         icon: root.icon
         tooltip_text: root.originalPath
@@ -117,6 +118,44 @@ class OptionRow(OneLineIconListItem):
 class FileRow(OneLineIconListItem):
     icon = StringProperty()
     originalPath = StringProperty()
+    menu = None
+    
+    def createDropDown(self):
+        if not self.menu:
+            menu_items = [{
+                "viewclass": "OptionRow",
+                "text": "Load File",
+                "icon": "folder",
+                "height": dp(40),
+                "on_press": lambda : self.screen.loadFile(),
+                "on_release": lambda : self.closeMenu()
+            },
+            {
+                "viewclass": "OptionRow",
+                "text": "Save Project",
+                "icon": "content-save",
+                "height": dp(40),
+                "on_press": lambda : self.screen.saveFile(),
+                "on_release": lambda : self.closeMenu()
+            },
+            {
+                "viewclass": "OptionRow",
+                "text": "Load Project",
+                "icon": "folder-open",
+                "height": dp(40),
+                "on_press": lambda : self.screen.loadProject(),
+                "on_release": lambda : self.closeMenu()
+            },
+            ]
+            self.menu = MDDropdownMenu(
+                items=menu_items,
+                width_mult=3,
+            )    
+        self.menu.caller = self
+        self.menu.open()
+
+    def closeMenu(self):
+        self.menu.dismiss()
 
 
 class FileList(Screen):
