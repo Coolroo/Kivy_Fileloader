@@ -28,8 +28,8 @@ Builder.load_string(
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
 <ImportExcelFile>
-    orientation: "vertical"
-    on_release: root.setStatus(check)
+    orientation: "horizontal"
+    on_release: root.setStatus(check, sheetName)
     
     CheckboxLeftWidget:
         id: check
@@ -41,6 +41,7 @@ Builder.load_string(
         size_hint_x: None
         width: root.width/3
         pos_hint: {'center_x': 0.5}
+        disabled: True
 
 <ImportFile>
     orientation: "vertical"
@@ -127,7 +128,6 @@ Builder.load_string(
 )
 
 class ImportExcelFile(OneLineAvatarIconListItem):
-    divider = None
     sheet = StringProperty()
     
     def setStatus(self, check, textBox):
@@ -316,15 +316,18 @@ class FileList(Screen):
             numSheets = 0
             for sheet in items:
                 if sheet.ids.check.active:
+                    text = sheet.ids.sheetName.text
+                    if text == "":
+                        continue
                     numSheets+=1
-                    returnVal = controller.loadExcelSheet(filePath, sheet.sheet, sheet.ids.sheetName.text)
+                    returnVal = controller.loadExcelSheet(filePath, sheet.sheet, text)
                     if returnVal == 1:
                         successfulLoads+=1
             Snackbar(text=f'Successfully loaded {successfulLoads}/{numSheets} sheets', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             self.importDialogExcel.dismiss()
             self.list_files()
 
-        if not self.importDialogExcel:
+        if True:
             self.importDialogExcel = MDDialog(
             title="Please select the sheets you would like to import, and then give them a name",
             type="confirmation",
