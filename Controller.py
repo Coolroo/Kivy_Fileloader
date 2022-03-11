@@ -1,6 +1,7 @@
 
 import fileLoading
 import os
+from pandas import read_excel
 
 def checkForExt(filePath, ext):
     if os.path.splitext(os.path.basename(filePath))[1][1:] != ext:
@@ -39,15 +40,12 @@ class Controller:
         
         :doc-author: Trelent
         """
+        if fileName in self.loadedFiles:
+            print("A file with this name already exists, please choose another name")
+            return 0
         try:
             newFile = fileLoading.loadFile(filePath)
-            print("test")
             self.loadedFiles[fileName] = newFile
-            if newFile["fileType"] == "Excel":
-                if len(newFile["file"].sheet_names) > 1:
-                    return 2
-                else:
-                    newFile["file"] = newFile["file"].parse(newFile["file"].sheet_names[0])
             print(f'Successfully loaded file')
             return 1
         except IOError:
@@ -55,6 +53,18 @@ class Controller:
             return 0
         except TypeError:
             print(f'The type of file specified is not supported')
+            return 0
+        
+    def loadExcelSheet(self, filePath, sheetName, fileName):
+        if fileName in self.loadedFiles:
+            print("A file with this name already exists, please choose another name")
+            return 0
+        try:
+            newFile = fileLoading.loadExcelSheet(filePath, sheetName)
+            self.loadedFiles[fileName] = newFile
+            return 1
+        except:
+            print("Loading Excel file Failed")
             return 0
     
     def clearLoadedFiles(self):
@@ -89,3 +99,13 @@ class Controller:
     
     def getLoadedFile(self, fileName):
         return self.loadedFiles[fileName]
+    
+def getFileType(filePath):
+    file_name = os.path.basename(filePath)
+    file_extension = os.path.splitext(file_name)[1][1:]
+    if file_extension == "csv":
+        return "csv"
+    elif file_extension.find("xls") >= 0:
+        return "Excel"
+    else:
+        return "unsupported"

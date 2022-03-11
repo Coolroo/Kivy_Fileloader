@@ -1,4 +1,4 @@
-from Controller import Controller
+from Controller import Controller, getFileType
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
@@ -9,7 +9,7 @@ from kivy.app import App
 
 
 from kivymd.app import MDApp
-from kivymd.uix.list import OneLineIconListItem, IconLeftWidget
+from kivymd.uix.list import OneLineIconListItem, IconLeftWidget, OneLineAvatarIconListItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
@@ -19,6 +19,7 @@ from kivymd.uix.tooltip import MDTooltip
 
 from plyer import filechooser
 import keyword
+import pandas as pd
 
 controller = Controller()
 Builder.load_string(
@@ -26,11 +27,30 @@ Builder.load_string(
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<ImportExcelFile>
+    orientation: "vertical"
+    on_release: root.setStatus(check)
+    
+    CheckboxLeftWidget:
+        id: check
+        group: "check"
+    
+    MDTextField:
+        id: sheetName
+        hint_text: "Sheet Name"
+        size_hint_x: None
+        width: root.width/3
+        pos_hint: {'center_x': 0.5}
+
 <ImportFile>
     orientation: "vertical"
     spacing: "12dp"
     size_hint_y: None
     height: "120dp"
+    
+    MDLabel:
+        id: fileLabel
+        text: f'Importing file'
 
     MDTextField:
         id: dialogTextBox
@@ -106,11 +126,21 @@ Builder.load_string(
 '''
 )
 
+class ImportExcelFile(OneLineAvatarIconListItem):
+    divider = None
+    sheet = StringProperty()
+    
+    def setStatus(self, check, textBox):
+        check.active = not check.active
+        textBox.disabled = not check.active
+        
+        
+
 class TooltipLeftIconWidget(IconLeftWidget, MDTooltip):
     pass
 
 class ImportFile(BoxLayout):
-    pass
+    Path = StringProperty()
 
 class OptionRow(OneLineIconListItem):
     icon = StringProperty()
@@ -161,6 +191,7 @@ class FileRow(OneLineIconListItem):
 class FileList(Screen):
 
     importDialog = None
+    importDialogExcel = None
     buttonDisabled=True
 
     def loadFile(self):
@@ -176,7 +207,14 @@ class FileList(Screen):
         file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]])
         if file:
             #self.showImportDialog()
-            self.showImportDialog(file[0])
+            filetype = getFileType(file[0])
+            if filetype == "csv":
+                self.showImportDialog(file[0])
+            elif filetype == "Excel":
+                sheets = pd.ExcelFile(file[0]).sheet_names
+                self.showImportDialogExcel(file[0], sheets)
+            else:
+                Snackbar(text="Could not load an unsupported file type!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
 
     def saveFile(self):
         global controller
@@ -184,10 +222,10 @@ class FileList(Screen):
         if file:
             returnVal = controller.save(file[0])
             if returnVal:
-                Snackbar(text="Successfully Saved File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                Snackbar(text="Successfully Saved File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
                 print("Successfully saved file!")
             else:
-                Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
                 print("Could not save file!")
 
     def list_files(self, text=""):
@@ -216,9 +254,9 @@ class FileList(Screen):
         if file:
             returnVal = controller.loadProject(file[0])
             if returnVal:
-                Snackbar(text="Successfully Loaded Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                Snackbar(text="Successfully Loaded Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             else:
-                Snackbar(text="Could not Load Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                Snackbar(text="Could not Load Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
         self.list_files()
 
     
@@ -235,10 +273,10 @@ class FileList(Screen):
             if returnVal > 0:
                 if returnVal == 2:
                     pass
-                Snackbar(text="Successfully Loaded File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+                Snackbar(text="Successfully Loaded File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
                 self.list_files()
                 return
-            Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5).open()
+            Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
 
 
         if not self.importDialog:
@@ -262,7 +300,52 @@ class FileList(Screen):
                     ),
                 ],
             )
+        self.importDialog.content_cls.ids.fileLabel.text = f'Importing file {filePath}'
         self.importDialog.open()
+
+
+    def showImportDialogExcel(self, filePath, sheets):
+        global controller
+
+        def closeDialog(button):
+            self.importDialogExcel.dismiss()
+
+        def finishLoad(button):
+            items = self.importDialogExcel.items
+            successfulLoads = 0
+            numSheets = 0
+            for sheet in items:
+                if sheet.ids.check.active:
+                    numSheets+=1
+                    returnVal = controller.loadExcelSheet(filePath, sheet.sheet, sheet.ids.sheetName.text)
+                    if returnVal == 1:
+                        successfulLoads+=1
+            Snackbar(text=f'Successfully loaded {successfulLoads}/{numSheets} sheets', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            self.importDialogExcel.dismiss()
+            self.list_files()
+
+        if not self.importDialogExcel:
+            self.importDialogExcel = MDDialog(
+            title="Please select the sheets you would like to import, and then give them a name",
+            type="confirmation",
+            auto_dismiss=False,
+            items = [ImportExcelFile(text=sheetName, sheet=sheetName) for sheetName in sheets],
+            buttons=[
+                    MDFlatButton(
+                        text="CANCEL",
+                        theme_text_color="Custom",
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_press=closeDialog,
+                    ),
+                    MDFlatButton(
+                        text="OK",
+                        theme_text_color="Custom",
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_release=finishLoad,
+                    ),
+                ],
+            )
+        self.importDialogExcel.open()
 
 
 

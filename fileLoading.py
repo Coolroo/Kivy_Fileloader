@@ -2,6 +2,12 @@ from argparse import FileType
 from pandas import read_csv, read_excel, HDFStore, read_hdf, ExcelFile
 import os
 
+def loadExcelSheet(path, sheetName):
+    file_name = os.path.basename(path)
+    file = {"file": None, "fileType": "Excel", "fileName": f'{file_name}({sheetName})'}
+    file["file"] = read_excel(path, sheetName)
+    return file
+
 def loadFile(path):
     """
     The loadFile function loads a file from the specified path and returns it as a pandas dataframe.
