@@ -29,17 +29,6 @@ class Controller:
         return self.loadedFiles[key]
     
     def loadFile(self, filePath, fileName):
-        """
-        The loadFile function loads a file into memory and returns the data in a dictionary.
-            The function takes one argument, the path to the file to be loaded.
-            It returns 1 if successful and 0 if not.
-        
-        :param self: Used to Access variables that belongs to the class.
-        :param filePath: Used to Store the filepath of the file that is being loaded.
-        :return: A 1 if the file was loaded successfully, a 2 if there are multiple sheets in an excel file and a 0 if it failed.
-        
-        :doc-author: Trelent
-        """
         if fileName in self.loadedFiles:
             print("A file with this name already exists, please choose another name")
             return 0

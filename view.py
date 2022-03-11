@@ -327,27 +327,26 @@ class FileList(Screen):
             self.importDialogExcel.dismiss()
             self.list_files()
 
-        if True:
-            self.importDialogExcel = MDDialog(
-            title="Please select the sheets you would like to import, and then give them a name",
-            type="confirmation",
-            auto_dismiss=False,
-            items = [ImportExcelFile(text=sheetName, sheet=sheetName) for sheetName in sheets],
-            buttons=[
-                    MDFlatButton(
-                        text="CANCEL",
-                        theme_text_color="Custom",
-                        text_color=App.get_running_app().theme_cls.primary_color,
-                        on_press=closeDialog,
-                    ),
-                    MDFlatButton(
-                        text="OK",
-                        theme_text_color="Custom",
-                        text_color=App.get_running_app().theme_cls.primary_color,
-                        on_release=finishLoad,
-                    ),
-                ],
-            )
+        self.importDialogExcel = MDDialog(
+        title="Please select the sheets you would like to import, and then give them a name",
+        type="confirmation",
+        auto_dismiss=False,
+        items = [ImportExcelFile(text=sheetName, sheet=sheetName) for sheetName in sheets],
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                ),
+            ],
+        )
         self.importDialogExcel.open()
 
 
