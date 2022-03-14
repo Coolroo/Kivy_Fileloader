@@ -13,6 +13,7 @@ class Controller:
     
     def __init__(self):
         self.loadedFiles = {}
+        self.workingSheet = {}
 
     def __enter__(self):
         return self.loadedFiles

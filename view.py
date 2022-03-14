@@ -2,7 +2,7 @@ from Controller import Controller, getFileType
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.screenmanager import Screen
 from kivy.metrics import dp
 from kivy.app import App
@@ -14,11 +14,10 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
-from kivymd.uix.textfield import MDTextField
 from kivymd.uix.tooltip import MDTooltip
 
+import usefulFunctions
 from plyer import filechooser
-import keyword
 import pandas as pd
 
 controller = Controller()
@@ -34,14 +33,16 @@ Builder.load_string(
     CheckboxLeftWidget:
         id: check
         group: "check"
+        textbox: sheetName
     
     MDTextField:
         id: sheetName
         hint_text: "Sheet Name"
         size_hint_x: None
         width: root.width/3
-        pos_hint: {'center_x': 0.5}
-        disabled: True
+        pos_hint: {'right': 1}
+        pos: root.pos
+        on_text: root.checkValidity(check)
 
 <ImportFile>
     orientation: "vertical"
@@ -129,10 +130,22 @@ Builder.load_string(
 
 class ImportExcelFile(OneLineAvatarIconListItem):
     sheet = StringProperty()
+    confirmButton = ObjectProperty(None)
+    textbox = ObjectProperty(None)
     
     def setStatus(self, check, textBox):
         check.active = not check.active
-        textBox.disabled = not check.active
+        
+        self.checkValidity(check)
+        
+    def checkValidity(self, check):
+        validOption = False
+        check_list = check.get_widgets(check.group)
+        for ch in check_list:
+            if ch.active:
+                validOption = validOption or usefulFunctions.isIdentifier(ch.textbox.text)
+        
+        self.confirmButton.disabled = not validOption
         
         
 
@@ -327,11 +340,18 @@ class FileList(Screen):
             self.importDialogExcel.dismiss()
             self.list_files()
 
+        button = MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                    disabled=True,
+                )
         self.importDialogExcel = MDDialog(
         title="Please select the sheets you would like to import, and then give them a name",
         type="confirmation",
         auto_dismiss=False,
-        items = [ImportExcelFile(text=sheetName, sheet=sheetName) for sheetName in sheets],
+        items = [ImportExcelFile(text=sheetName, sheet=sheetName, confirmButton=button) for sheetName in sheets],
         buttons=[
                 MDFlatButton(
                     text="CANCEL",
@@ -339,12 +359,7 @@ class FileList(Screen):
                     text_color=App.get_running_app().theme_cls.primary_color,
                     on_press=closeDialog,
                 ),
-                MDFlatButton(
-                    text="OK",
-                    theme_text_color="Custom",
-                    text_color=App.get_running_app().theme_cls.primary_color,
-                    on_release=finishLoad,
-                ),
+                button,
             ],
         )
         self.importDialogExcel.open()
