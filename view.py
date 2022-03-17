@@ -15,6 +15,7 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.tooltip import MDTooltip
+from kivymd.uix.textfield import MDTextField
 
 import usefulFunctions
 from plyer import filechooser
@@ -26,6 +27,40 @@ Builder.load_string(
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<ChemicalAddDialog>
+    orientation: 'vertical'
+    spacing: dp(12)
+    size_hint_y = None
+    height: dp(120)
+    
+    MDTextField:
+        id: chemicalName
+        hint_text: "Name of the chemical species"
+        on_text: root.validate()
+    
+    MDBoxLayout:
+        orientation: "horizontal"
+        
+        MDLabel:
+            text: "X-Axis Units"
+            
+        MDTextField:
+            id: XAxis
+            hint_text: "Units for the X-Axis"
+            on_text: root.validate()
+            
+    MDBoxLayout:
+        orientation: "horizontal"
+        
+        MDLabel:
+            text: "Y-Axis Units"
+            
+        MDTextField:
+            hint_text: "Units for the Y-Axis"
+            id: YAxis
+            on_text: root.validate()
+    
+    
 <ImportExcelFile>
     orientation: "horizontal"
     on_release: root.setStatus(check, sheetName)
@@ -100,6 +135,7 @@ Builder.load_string(
                     round: dp(80)
                     anchor_title: "center"
                     font_size: 16
+                    left_action_items: [["plus-thick", lambda x: root.loadFile(), "Load a new file"]]
 
                 RecycleView:
                     id: rv
@@ -122,11 +158,24 @@ Builder.load_string(
                     md_bg_color: self.theme_cls.accent_color
                     type: "top"
                     anchor_title: "center"
+                    left_action_items: [["plus-thick", lambda x: root.addChemical(), "Add Chemical Species"]]
                 AnchorLayout:
                     id: "dataTableLayout"
                 
 '''
 )
+
+class ChemicalAddDialog(BoxLayout):
+    def __init__(self, button):
+        self.button = button
+        self.xAxis = self.ids.XAxis
+        self.yAxis = self.ids.YAxis
+        self.chemicalName = self.ids.chemicalName
+        
+    def validate(self):
+        self.button.disabled = not (self.xAxis.text == "" or self.yAxis.text == "" or self.chemicalName.text == "" or controller.getLoadedFile(self.chemicalName.text) is None)
+    
+        
 
 class ImportExcelFile(OneLineAvatarIconListItem):
     sheet = StringProperty()
@@ -147,7 +196,7 @@ class ImportExcelFile(OneLineAvatarIconListItem):
         
         self.confirmButton.disabled = not validOption
         
-        
+
 
 class TooltipLeftIconWidget(IconLeftWidget, MDTooltip):
     pass
@@ -167,8 +216,8 @@ class FileRow(OneLineIconListItem):
         if not self.menu:
             menu_items = [{
                 "viewclass": "OptionRow",
-                "text": "Load File",
-                "icon": "folder",
+                "text": "New Project",
+                "icon": "file",
                 "height": dp(40),
                 "on_press": lambda : self.screen.loadFile(),
                 "on_release": lambda : self.closeMenu()
@@ -205,6 +254,7 @@ class FileList(Screen):
 
     importDialog = None
     importDialogExcel = None
+    chemicalDialog = None
     buttonDisabled=True
 
     def loadFile(self):
@@ -315,6 +365,42 @@ class FileList(Screen):
             )
         self.importDialog.content_cls.ids.fileLabel.text = f'Importing file {filePath}'
         self.importDialog.open()
+    
+    def showChemicalDialog(self):
+        global controller
+
+        def closeDialog(button):
+            self.chemicalDialog.dismiss()
+
+        def finishLoad(button):
+           pass
+
+        textInput = MDTextField()
+        button = MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                    disabled=True,
+                )
+        self.importDialogExcel = MDDialog(
+        title="Please select a name for the chemical species",
+        type="custom",
+        content_cls=ChemicalAddDialog(button),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                button,
+            ],
+        )
+        self.importDialogExcel.open()
+        
+        
 
 
     def showImportDialogExcel(self, filePath, sheets):
@@ -374,10 +460,10 @@ class MainApp(MDApp):
     def build(self):
         menu_items = [{
             "viewclass": "OptionRow",
-            "text": "Load File",
-            "icon": "folder",
+            "text": "New Project",
+            "icon": "file",
             "height": dp(40),
-            "on_press": lambda : self.screen.loadFile(),
+            "on_press": lambda : self.clearProject(),
             "on_release": lambda : self.closeMenu()
         },
         {
@@ -414,6 +500,11 @@ class MainApp(MDApp):
 
     def closeMenu(self):
         self.menu.dismiss()
+        
+    def clearProject(self):
+        controller.clearLoadedFiles()
+        self.screen.list_files()
+        
         
 
 

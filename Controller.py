@@ -1,7 +1,6 @@
 
 import fileLoading
 import os
-from pandas import read_excel
 
 def checkForExt(filePath, ext):
     if os.path.splitext(os.path.basename(filePath))[1][1:] != ext:
