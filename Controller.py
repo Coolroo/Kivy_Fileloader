@@ -1,6 +1,7 @@
 
 import fileLoading
 import os
+from pandas import DataFrame
 
 def checkForExt(filePath, ext):
     if os.path.splitext(os.path.basename(filePath))[1][1:] != ext:
@@ -12,7 +13,7 @@ class Controller:
     
     def __init__(self):
         self.loadedFiles = {}
-        self.workingSheet = {}
+        self.chemicalData = {}
 
     def __enter__(self):
         return self.loadedFiles
@@ -28,8 +29,20 @@ class Controller:
     def __getitem__(self, key):
         return self.loadedFiles[key]
     
+    def addChemicalData(self, chemicalName, xAxis, yAxis):
+        if chemicalName in self.chemicalData or chemicalName in self.loadedFiles:
+            print("A chemical species with this name already exists")
+            return 0
+        else:
+            self.chemicalData[chemicalName] = {}
+            self.chemicalData[chemicalName]["xAxis"] = xAxis
+            self.chemicalData[chemicalName]["yAxis"] = yAxis
+            self.chemicalData[chemicalName]["data"] = DataFrame({xAxis: [], yAxis: []})
+            return 1
+    
+    
     def loadFile(self, filePath, fileName):
-        if fileName in self.loadedFiles:
+        if fileName in self.loadedFiles or fileName in self.chemicalData:
             print("A file with this name already exists, please choose another name")
             return 0
         try:
@@ -45,7 +58,7 @@ class Controller:
             return 0
         
     def loadExcelSheet(self, filePath, sheetName, fileName):
-        if fileName in self.loadedFiles:
+        if fileName in self.loadedFiles or fileName in self.chemicalData:
             print("A file with this name already exists, please choose another name")
             return 0
         try:
@@ -56,7 +69,7 @@ class Controller:
             print("Loading Excel file Failed")
             return 0
     
-    def clearLoadedFiles(self):
+    def clearProject(self):
         """
         The clearLoadedFiles function clears the loaded files list.
         
@@ -65,13 +78,19 @@ class Controller:
         :doc-author: Trelent
         """
         self.loadedFiles = {}
+        self.chemicalData = {}
+    
+    def getChemicalData(self):
+        return self.chemicalData
+    
+    def getLoadedFiles(self):
+        return self.loadedFiles
     
     def save(self, filePath):
         filePath = checkForExt(filePath, "hdf")
         print(f'Attempting save at {filePath}')
-        files = {}
         try:
-            fileLoading.saveDFs(filePath, self.loadedFiles)
+            fileLoading.saveDFs(filePath, self.loadedFiles, self.chemicalData)
             return 1
         except IOError:
             return 0
@@ -81,7 +100,8 @@ class Controller:
         print(f'Trying to get HDF file at path {filePath}')
         try:
             newDataFrames = fileLoading.HDFtoDict(filePath)
-            self.loadedFiles = newDataFrames
+            self.loadedFiles = newDataFrames[0]
+            self.chemicalData = newDataFrames[1]
             return 1
         except AttributeError:
             return 0

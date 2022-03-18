@@ -30,7 +30,7 @@ Builder.load_string(
 <ChemicalAddDialog>
     orientation: 'vertical'
     spacing: dp(12)
-    size_hint_y = None
+    size_hint_y: None
     height: dp(120)
     
     MDTextField:
@@ -87,7 +87,7 @@ Builder.load_string(
     
     MDLabel:
         id: fileLabel
-        text: f'Importing file'
+        text: 'Importing file'
 
     MDTextField:
         id: dialogTextBox
@@ -97,6 +97,11 @@ Builder.load_string(
 <OptionRow>
     IconLeftWidget:
         icon: root.icon
+        
+<ChemicalData>
+    TooltipIconLeftWidget:
+        icon: root.icon
+        pos_hint: {"center_x": .5, "center_y": .5}
 
 <FileRow>
     on_release: self.createDropDown()
@@ -104,9 +109,6 @@ Builder.load_string(
         icon: root.icon
         tooltip_text: root.originalPath
         pos_hint: {"center_x": .5, "center_y": .5}
-
-        
-
 
 <FileList>
 
@@ -158,25 +160,36 @@ Builder.load_string(
                     md_bg_color: self.theme_cls.accent_color
                     type: "top"
                     anchor_title: "center"
-                    left_action_items: [["plus-thick", lambda x: root.addChemical(), "Add Chemical Species"]]
-                AnchorLayout:
-                    id: "dataTableLayout"
+                    left_action_items: [["plus-thick", lambda x: root.showChemicalDialog(), "Add Chemical Species"]]
+                
+                RecycleView:
+                    id: chemicalList
+                    key_viewclass: 'viewclass'
+                    key_size: 'height'
+
+                    RecycleBoxLayout:
+                        padding: dp(10)
+                        default_size: None, dp(48)
+                        default_size_hint: 1, None
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: 'vertical'
                 
 '''
 )
 
 class ChemicalAddDialog(BoxLayout):
-    def __init__(self, button):
-        self.button = button
-        self.xAxis = self.ids.XAxis
-        self.yAxis = self.ids.YAxis
-        self.chemicalName = self.ids.chemicalName
+    button = ObjectProperty()
         
     def validate(self):
-        self.button.disabled = not (self.xAxis.text == "" or self.yAxis.text == "" or self.chemicalName.text == "" or controller.getLoadedFile(self.chemicalName.text) is None)
+        self.button.disabled = (self.ids.XAxis.text == "" or 
+                                self.ids.YAxis.text == "" or 
+                                self.ids.chemicalName.text == "" or 
+                                self.ids.chemicalName.text in controller.getChemicalData() or 
+                                self.ids.chemicalName.text in controller.getLoadedFiles() or 
+                                not usefulFunctions.isIdentifier(self.ids.chemicalName.text))
     
         
-
 class ImportExcelFile(OneLineAvatarIconListItem):
     sheet = StringProperty()
     confirmButton = ObjectProperty(None)
@@ -197,7 +210,6 @@ class ImportExcelFile(OneLineAvatarIconListItem):
         self.confirmButton.disabled = not validOption
         
 
-
 class TooltipLeftIconWidget(IconLeftWidget, MDTooltip):
     pass
 
@@ -205,6 +217,9 @@ class ImportFile(BoxLayout):
     Path = StringProperty()
 
 class OptionRow(OneLineIconListItem):
+    icon = StringProperty()
+
+class ChemicalData(OneLineIconListItem):
     icon = StringProperty()
 
 class FileRow(OneLineIconListItem):
@@ -228,14 +243,6 @@ class FileRow(OneLineIconListItem):
                 "icon": "content-save",
                 "height": dp(40),
                 "on_press": lambda : self.screen.saveFile(),
-                "on_release": lambda : self.closeMenu()
-            },
-            {
-                "viewclass": "OptionRow",
-                "text": "Load Project",
-                "icon": "folder-open",
-                "height": dp(40),
-                "on_press": lambda : self.screen.loadProject(),
                 "on_release": lambda : self.closeMenu()
             },
             ]
@@ -291,7 +298,7 @@ class FileList(Screen):
                 Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
                 print("Could not save file!")
 
-    def list_files(self, text=""):
+    def list_files(self):
         global controller
         '''Builds a list of icons for the screen MDIcons.'''
         fileAssociation = {"Excel": "file-excel", "csv": "file"}
@@ -306,10 +313,26 @@ class FileList(Screen):
             )
 
         self.ids.rv.data = []
-        with controller as files:
-            fileKeys = files.keys()
-            for file in fileKeys:
-                add_file(files[file], file)
+        files = controller.getLoadedFiles()
+        fileKeys = files.keys()
+        for file in fileKeys:
+            add_file(files[file], file)
+        self.list_chemicals()
+                
+    def list_chemicals(self):
+        global controller
+        
+        def add_file(chemicalData):
+            self.ids.chemicalList.data.append(
+                {
+                    "viewclass": "ChemicalData",
+                    "text": chemicalData,
+                    "icon": "atom"
+                })
+        self.ids.chemicalList.data = []
+        keys = controller.chemicalData.keys()
+        for key in keys:
+            add_file(key)
     
     def loadProject(self):
         global controller
@@ -373,7 +396,15 @@ class FileList(Screen):
             self.chemicalDialog.dismiss()
 
         def finishLoad(button):
-           pass
+           content = self.chemicalDialog.content_cls
+           chemicalName = content.ids.chemicalName.text
+           yAxis = content.ids.YAxis.text
+           xAxis = content.ids.XAxis.text
+           
+           controller.addChemicalData(chemicalName, xAxis, yAxis)
+           self.list_files()
+           closeDialog(button)
+           
 
         textInput = MDTextField()
         button = MDFlatButton(
@@ -383,10 +414,10 @@ class FileList(Screen):
                     on_release=finishLoad,
                     disabled=True,
                 )
-        self.importDialogExcel = MDDialog(
+        self.chemicalDialog = MDDialog(
         title="Please select a name for the chemical species",
         type="custom",
-        content_cls=ChemicalAddDialog(button),
+        content_cls=ChemicalAddDialog(button=button),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -398,7 +429,7 @@ class FileList(Screen):
                 button,
             ],
         )
-        self.importDialogExcel.open()
+        self.chemicalDialog.open()
         
         
 
@@ -502,9 +533,42 @@ class MainApp(MDApp):
         self.menu.dismiss()
         
     def clearProject(self):
-        controller.clearLoadedFiles()
-        self.screen.list_files()
+        self.confirmationDialog()
+    
+    def confirmationDialog(self):
+        global controller
+
+        def closeDialog(button):
+            self.confirmDialog.dismiss()
+
+        def confirm(button):
+            controller.clearProject()
+            self.screen.list_files()
+            closeDialog(button)
         
+        
+        
+        self.confirmDialog = MDDialog(
+        title="WARNING!",
+        text="Warning! This will clear all the data loaded into the app, are you sure you wish to proceed?",
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                MDFlatButton(
+                    text="CONFIRM",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=confirm,
+                ),
+            ],
+        )
+        self.confirmDialog.open()
+    
         
 
 

@@ -30,7 +30,7 @@ def loadFile(path):
         raise TypeError()
     return file
 
-def saveDFs(path, dataFrames):
+def saveDFs(path, dataFrames, chemicalData):
     """
     The saveDFs function saves a dictionary of dataframes to an HDF5 file.
     
@@ -45,6 +45,11 @@ def saveDFs(path, dataFrames):
         newHDF.put(key, dataFrames[key]["file"])
         newHDF.get_storer(key).attrs.fileType=dataFrames[key]["fileType"]
         newHDF.get_storer(key).attrs.fileName=dataFrames[key]["fileName"]
+        newHDF.get_storer(key).attrs.isData=True
+    keys = chemicalData.keys()
+    for key in keys:
+        newHDF.put(key, chemicalData[key]["data"])
+        newHDF.get_storer(key).attrs.isData=False
     newHDF.flush()
     newHDF.close()
 
@@ -61,11 +66,15 @@ def HDFtoDict(path):
     keyFile = HDFStore(path=path)
     keys = keyFile.keys()
     DataDict = {}
+    chemicalDict = {}
     for key in keys:
         sheet = key[1:]
-        DataDict[sheet] = {}
-        DataDict[sheet]["file"] = keyFile[sheet]
-        DataDict[sheet]["fileType"] = keyFile.get_storer(sheet).attrs.fileType
-        DataDict[sheet]["fileName"] = keyFile.get_storer(sheet).attrs.fileName
+        if keyFile.get_storer(sheet).attrs.isData:
+            DataDict[sheet] = {}
+            DataDict[sheet]["file"] = keyFile[sheet]
+            DataDict[sheet]["fileType"] = keyFile.get_storer(sheet).attrs.fileType
+            DataDict[sheet]["fileName"] = keyFile.get_storer(sheet).attrs.fileName
+        else:
+            chemicalDict[sheet] = keyFile[sheet]
     keyFile.close()
-    return DataDict
+    return [DataDict, chemicalDict]
