@@ -323,18 +323,7 @@ class FileList(Screen):
 
         def closeDialog(button):
             self.preferencesDialog.dismiss()
-
-
-        def finishLoad(button):
-            closeDialog()
         
-
-        button = MDFlatButton(
-                    text="Save Changes",
-                    theme_text_color="Custom",
-                    text_color=App.get_running_app().theme_cls.primary_color,
-                    on_release=finishLoad,
-                )
         self.preferencesDialog = MDDialog(
         title="Your Preferences",
         type="custom",
@@ -347,7 +336,6 @@ class FileList(Screen):
                     text_color=App.get_running_app().theme_cls.primary_color,
                     on_press=closeDialog,
                 ),
-                button,
             ],
         )
         configUnits = controller.getConfigUnits()
