@@ -9,179 +9,49 @@ from kivy.app import App
 
 
 from kivymd.app import MDApp
-from kivymd.uix.list import OneLineIconListItem, IconLeftWidget, OneLineAvatarIconListItem
+from kivymd.uix.list import OneLineIconListItem, IconLeftWidget, OneLineAvatarIconListItem, OneLineListItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.tooltip import MDTooltip
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.label import MDLabel
 
 import usefulFunctions
 from plyer import filechooser
 import pandas as pd
 
 controller = Controller()
-Builder.load_string(
-    '''
-#:import images_path kivymd.images_path
-<TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
+Builder.load_file('AppLayout.kv')
 
-<PreferencesMenu>
-    MDBoxLayout:
-        orientation: 'horizontal'
-        
-
-<ChemicalAddDialog>
-    orientation: 'vertical'
-    spacing: dp(12)
-    size_hint_y: None
-    height: dp(120)
+class PreferencesLine(OneLineListItem):
+    unit = StringProperty()
+    dialog = ObjectProperty()
     
-    MDTextField:
-        id: chemicalName
-        hint_text: "Name of the chemical species"
-        on_text: root.validate()
+    def selectUnit(self):
+        self.dialog.content_cls.selectUnit(self.unit)
+
+class PreferencesMenu(BoxLayout):
+    currUnit = ""
     
-    MDBoxLayout:
-        orientation: "horizontal"
-        
-        MDLabel:
-            text: "X-Axis Units"
-            
-        MDTextField:
-            id: XAxis
-            hint_text: "Units for the X-Axis"
-            on_text: root.validate()
-            
-    MDBoxLayout:
-        orientation: "horizontal"
-        
-        MDLabel:
-            text: "Y-Axis Units"
-            
-        MDTextField:
-            hint_text: "Units for the Y-Axis"
-            id: YAxis
-            on_text: root.validate()
+    def addSubUnit(self, unit):
+        pass
+
+    def validate(self, text):
+        pass
     
-    
-<ImportExcelFile>
-    orientation: "horizontal"
-    on_release: root.setStatus(check, sheetName)
-    
-    CheckboxLeftWidget:
-        id: check
-        group: "check"
-        textbox: sheetName
-    
-    MDTextField:
-        id: sheetName
-        hint_text: "Sheet Name"
-        size_hint_x: None
-        width: root.width/3
-        pos_hint: {'right': 1}
-        pos: root.pos
-        on_text: root.checkValidity(check)
-
-<ImportFile>
-    orientation: "vertical"
-    spacing: "12dp"
-    size_hint_y: None
-    height: "120dp"
-    
-    MDLabel:
-        id: fileLabel
-        text: 'Importing file'
-
-    MDTextField:
-        id: dialogTextBox
-        hint_text: "File Name (No special characters, only numbers and letters)"
-
-
-<OptionRow>
-    IconLeftWidget:
-        icon: root.icon
-        
-<ChemicalData>
-    TooltipIconLeftWidget:
-        icon: root.icon
-        pos_hint: {"center_x": .5, "center_y": .5}
-
-<FileRow>
-    on_release: self.createDropDown()
-    TooltipIconLeftWidget:
-        icon: root.icon
-        tooltip_text: root.originalPath
-        pos_hint: {"center_x": .5, "center_y": .5}
-
-<FileList>
-
-    MDBoxLayout:
-        orientation: 'vertical'
-
-        MDToolbar:
-            title: "Chemistry App"
-            left_action_items: [["menu", lambda x: app.loadMenu(x)]]
-
-        MDBoxLayout:
-            orientation: 'horizontal'
-
-            MDBoxLayout:
-                orientation: 'vertical'
-                size_hint_x: None
-                width: root.width/3
-                
-                MDToolbar:
-                    title: "Loaded Files"
-                    md_bg_color: self.theme_cls.accent_dark
-                    on_action_button: lambda x: root.loadFile()
-                    type: "top"
-                    type_height: "small"
-                    mode: "free-center"
-                    round: dp(80)
-                    anchor_title: "center"
-                    font_size: 16
-                    left_action_items: [["plus-thick", lambda x: root.loadFile(), "Load a new file"]]
-
-                RecycleView:
-                    id: rv
-                    key_viewclass: 'viewclass'
-                    key_size: 'height'
-
-                    RecycleBoxLayout:
-                        padding: dp(10)
-                        default_size: None, dp(48)
-                        default_size_hint: 1, None
-                        size_hint_y: None
-                        height: self.minimum_height
-                        orientation: 'vertical'
-            
-            MDBoxLayout:
-                orientation: 'vertical'
-
-                MDToolbar:
-                    title: "Data"
-                    md_bg_color: self.theme_cls.accent_color
-                    type: "top"
-                    anchor_title: "center"
-                    left_action_items: [["plus-thick", lambda x: root.showChemicalDialog(), "Add Chemical Species"]]
-                
-                RecycleView:
-                    id: chemicalList
-                    key_viewclass: 'viewclass'
-                    key_size: 'height'
-
-                    RecycleBoxLayout:
-                        padding: dp(10)
-                        default_size: None, dp(48)
-                        default_size_hint: 1, None
-                        size_hint_y: None
-                        height: self.minimum_height
-                        orientation: 'vertical'
-                
-'''
-)
+    def selectUnit(self, unit):
+        self.currUnit = unit
+        subUnits = controller.getConfigSubUnits(unit)
+        view = self.ids.subUnits
+        view.data = []
+        for subUnit in subUnits:
+            view.data.append(
+                {
+                    "viewclass": "OneLineListItem",
+                    "text": subUnit
+                })
 
 class ChemicalAddDialog(BoxLayout):
     button = ObjectProperty()
@@ -267,6 +137,7 @@ class FileList(Screen):
     importDialog = None
     importDialogExcel = None
     chemicalDialog = None
+    preferencesDialog = None
     buttonDisabled=True
 
     def loadFile(self):
@@ -302,42 +173,6 @@ class FileList(Screen):
             else:
                 Snackbar(text="Could not save file!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
                 print("Could not save file!")
-
-    def list_files(self):
-        global controller
-        '''Builds a list of icons for the screen MDIcons.'''
-        fileAssociation = {"Excel": "file-excel", "csv": "file"}
-        def add_file(file, filePath):
-            self.ids.rv.data.append(
-                {
-                    "viewclass": "FileRow",
-                    "text": filePath,
-                    "icon": fileAssociation[file["fileType"]],
-                    "originalPath": file["fileName"],
-                }
-            )
-
-        self.ids.rv.data = []
-        files = controller.getLoadedFiles()
-        fileKeys = files.keys()
-        for file in fileKeys:
-            add_file(files[file], file)
-        self.list_chemicals()
-                
-    def list_chemicals(self):
-        global controller
-        
-        def add_file(chemicalData):
-            self.ids.chemicalList.data.append(
-                {
-                    "viewclass": "ChemicalData",
-                    "text": chemicalData,
-                    "icon": "atom"
-                })
-        self.ids.chemicalList.data = []
-        keys = controller.chemicalData.keys()
-        for key in keys:
-            add_file(key)
     
     def loadProject(self):
         global controller
@@ -436,9 +271,6 @@ class FileList(Screen):
         )
         self.chemicalDialog.open()
         
-        
-
-
     def showImportDialogExcel(self, filePath, sheets):
         global controller
 
@@ -485,6 +317,88 @@ class FileList(Screen):
             ],
         )
         self.importDialogExcel.open()
+     
+    def showPreferencesDialog(self):
+        global controller
+
+        def closeDialog(button):
+            self.preferencesDialog.dismiss()
+
+
+        def finishLoad(button):
+            closeDialog()
+        
+
+        button = MDFlatButton(
+                    text="Save Changes",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                )
+        self.preferencesDialog = MDDialog(
+        title="Your Preferences",
+        type="custom",
+        content_cls=PreferencesMenu(),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                button,
+            ],
+        )
+        configUnits = controller.getConfigUnits()
+        self.preferencesDialog.content_cls.ids.units.data = []
+        for unit in configUnits:
+            self.preferencesDialog.content_cls.ids.units.data.append(
+                {
+                    "viewclass": "PreferencesLine",
+                    "text": unit,
+                    "unit": unit,
+                    "dialog": self.preferencesDialog
+                })
+        self.preferencesDialog.open()
+        
+        
+        
+    def list_files(self):
+        global controller
+        '''Builds a list of icons for the screen MDIcons.'''
+        fileAssociation = {"Excel": "file-excel", "csv": "file"}
+        def add_file(file, filePath):
+            self.ids.rv.data.append(
+                {
+                    "viewclass": "FileRow",
+                    "text": filePath,
+                    "icon": fileAssociation[file["fileType"]],
+                    "originalPath": file["fileName"],
+                }
+            )
+
+        self.ids.rv.data = []
+        files = controller.getLoadedFiles()
+        fileKeys = files.keys()
+        for file in fileKeys:
+            add_file(files[file], file)
+        self.list_chemicals()
+                
+    def list_chemicals(self):
+        global controller
+        
+        def add_file(chemicalData):
+            self.ids.chemicalList.data.append(
+                {
+                    "viewclass": "ChemicalData",
+                    "text": chemicalData,
+                    "icon": "atom"
+                })
+        self.ids.chemicalList.data = []
+        keys = controller.chemicalData.keys()
+        for key in keys:
+            add_file(key)
 
 
 
@@ -516,6 +430,14 @@ class MainApp(MDApp):
             "icon": "folder-open",
             "height": dp(40),
             "on_press": lambda : self.screen.loadProject(),
+            "on_release": lambda : self.closeMenu()
+        },
+        {
+            "viewclass": "OptionRow",
+            "text": "Preferences",
+            "icon": "cog",
+            "height": dp(40),
+            "on_press": lambda : self.screen.showPreferencesDialog(),
             "on_release": lambda : self.closeMenu()
         },
         ]

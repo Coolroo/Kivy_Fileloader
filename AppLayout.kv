@@ -1,0 +1,220 @@
+#:import images_path kivymd.images_path
+<TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
+
+<PreferencesLine>
+    on_release: root.dialog.content_cls.selectUnit(root.unit)
+
+<PreferencesMenu>
+    orientation: 'vertical'
+    size_hint: (0.5, None)
+    height: dp(300)
+    
+    MDBoxLayout:
+        orientation: 'horizontal'
+        
+        MDBoxLayout:
+            orientation: 'vertical'
+        
+            MDToolbar:
+                title: "Units"
+                md_bg_color: self.theme_cls.accent_dark
+                type: "top"
+                anchor_title: "center"
+                size_hint_y: None
+                height: dp(40)
+
+            RecycleView:
+                id: units
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+
+                RecycleBoxLayout:
+                    padding: dp(10)
+                    default_size: None, dp(48)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation: 'vertical'
+            
+            
+        MDBoxLayout:
+            orientation: 'vertical'
+            spacing: dp(10)
+            
+            
+            MDToolbar:
+                title: "Subunits"
+                id: overHeadBar
+                md_bg_color: self.theme_cls.accent_color
+                type: "top"
+                anchor_title: "center"
+                size_hint_y: None
+                height: dp(40)
+            
+            MDLabel:
+                text: 'Standard:' 
+                
+            RecycleView:
+                id: subUnits
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+
+                RecycleBoxLayout:
+                    padding: dp(10)
+                    default_size: None, dp(48)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation: 'vertical'
+            
+        
+        
+
+<ChemicalAddDialog>
+    orientation: 'vertical'
+    spacing: dp(12)
+    size_hint_y: None
+    height: dp(120)
+    
+    MDTextField:
+        id: chemicalName
+        hint_text: "Name of the chemical species"
+        on_text: root.validate()
+    
+    MDBoxLayout:
+        orientation: "horizontal"
+        
+        MDLabel:
+            text: "X-Axis Units"
+            
+        MDTextField:
+            id: XAxis
+            hint_text: "Units for the X-Axis"
+            on_text: root.validate()
+            
+    MDBoxLayout:
+        orientation: "horizontal"
+        
+        MDLabel:
+            text: "Y-Axis Units"
+            
+        MDTextField:
+            hint_text: "Units for the Y-Axis"
+            id: YAxis
+            on_text: root.validate()
+    
+    
+<ImportExcelFile>
+    orientation: "horizontal"
+    on_release: root.setStatus(check, sheetName)
+    
+    CheckboxLeftWidget:
+        id: check
+        group: "check"
+        textbox: sheetName
+    
+    MDTextField:
+        id: sheetName
+        hint_text: "Sheet Name"
+        size_hint_x: None
+        width: root.width/3
+        pos_hint: {'right': 1}
+        pos: root.pos
+        on_text: root.checkValidity(check)
+
+<ImportFile>
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
+    
+    MDLabel:
+        id: fileLabel
+        text: 'Importing file'
+
+    MDTextField:
+        id: dialogTextBox
+        hint_text: "File Name (No special characters, only numbers and letters)"
+
+
+<OptionRow>
+    IconLeftWidget:
+        icon: root.icon
+        
+<ChemicalData>
+    TooltipIconLeftWidget:
+        icon: root.icon
+        pos_hint: {"center_x": .5, "center_y": .5}
+
+<FileRow>
+    on_release: self.createDropDown()
+    TooltipIconLeftWidget:
+        icon: root.icon
+        tooltip_text: root.originalPath
+        pos_hint: {"center_x": .5, "center_y": .5}
+
+<FileList>
+
+    MDBoxLayout:
+        orientation: 'vertical'
+
+        MDToolbar:
+            title: "Chemistry App"
+            left_action_items: [["menu", lambda x: app.loadMenu(x)]]
+
+        MDBoxLayout:
+            orientation: 'horizontal'
+
+            MDBoxLayout:
+                orientation: 'vertical'
+                size_hint_x: None
+                width: root.width/3
+                
+                MDToolbar:
+                    title: "Loaded Files"
+                    md_bg_color: self.theme_cls.accent_dark
+                    on_action_button: lambda x: root.loadFile()
+                    type: "top"
+                    type_height: "small"
+                    mode: "free-center"
+                    round: dp(80)
+                    anchor_title: "center"
+                    font_size: 16
+                    left_action_items: [["plus-thick", lambda x: root.loadFile(), "Load a new file"]]
+
+                RecycleView:
+                    id: rv
+                    key_viewclass: 'viewclass'
+                    key_size: 'height'
+
+                    RecycleBoxLayout:
+                        padding: dp(10)
+                        default_size: None, dp(48)
+                        default_size_hint: 1, None
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: 'vertical'
+            
+            MDBoxLayout:
+                orientation: 'vertical'
+
+                MDToolbar:
+                    title: "Data"
+                    md_bg_color: self.theme_cls.accent_color
+                    type: "top"
+                    anchor_title: "center"
+                    left_action_items: [["plus-thick", lambda x: root.showChemicalDialog(), "Add Chemical Species"]]
+                
+                RecycleView:
+                    id: chemicalList
+                    key_viewclass: 'viewclass'
+                    key_size: 'height'
+
+                    RecycleBoxLayout:
+                        padding: dp(10)
+                        default_size: None, dp(48)
+                        default_size_hint: 1, None
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: 'vertical'
+                

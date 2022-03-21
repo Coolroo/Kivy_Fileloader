@@ -16,9 +16,34 @@ class Controller:
     def __init__(self):
         self.loadedFiles = {}
         self.chemicalData = {}
-        self.config = fileLoading.readConfig()
+        self.config = self.defaultConfig()
         print(dir_path)
         print(self.__dict__)
+        
+    def defaultConfig(self):
+        config = {}
+        config["Mass"] = {}
+        mass = config["Mass"]
+        mass["standard"] = "g"
+        mass["g"] = 1
+        mass["mg"] = 1/1000.0
+        mass["ug"] = 1/1000000.0
+        mass["ng"] = 1/1000000000.0
+        mass["kg"] = 1000
+        
+        config["Volume"] = {}
+        volume = config["Volume"]
+        volume["standard"] = "L"
+        volume["L"] = 1
+        volume["mL"] = 1/1000.0
+        
+        config["Concentration"] = {}
+        concentration = config["Concentration"]
+        concentration["standard"] = "M"
+        concentration["M"] = 1
+        concentration["mM"] = 1/1000.0
+        
+        return config
 
     def __enter__(self):
         return self.loadedFiles
@@ -117,6 +142,12 @@ class Controller:
     
     def getConfigUnits(self):
         return self.config.keys()
+    
+    def getConfigSubUnits(self, unit):
+        if unit in self.config:
+            return self.config[unit]
+        else:
+            return None
     
     
 def getFileType(filePath):

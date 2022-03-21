@@ -93,6 +93,7 @@ def HDFtoDict(path):
 
 
 def readConfig():
-    config = configparser.ConfigParser.read('config.ini')
+    config = configparser.ConfigParser()
+    config.read('config.ini')
     return config._sections
         
