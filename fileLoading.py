@@ -1,6 +1,8 @@
 from argparse import FileType
 from pandas import read_csv, read_excel, HDFStore, read_hdf, ExcelFile
 import os
+import configparser
+import numpy as np
 
 def loadExcelSheet(path, sheetName):
     file_name = os.path.basename(path)
@@ -30,7 +32,7 @@ def loadFile(path):
         raise TypeError()
     return file
 
-def saveDFs(path, dataFrames, chemicalData):
+def saveDFs(path, dataFrames, chemicalData, config):
     """
     The saveDFs function saves a dictionary of dataframes to an HDF5 file.
     
@@ -50,6 +52,10 @@ def saveDFs(path, dataFrames, chemicalData):
     for key in keys:
         newHDF.put(key, chemicalData[key]["data"])
         newHDF.get_storer(key).attrs.isData=False
+    
+    keys = config.keys()
+    items = [config[key] for key in keys]
+    newHDF.put("config", np.Series(data=items, index=keys, dtype="string"))
     newHDF.flush()
     newHDF.close()
 
@@ -67,6 +73,12 @@ def HDFtoDict(path):
     keys = keyFile.keys()
     DataDict = {}
     chemicalDict = {}
+    config = {}
+    if "config" in keys:
+        del keys["config"]
+        localConfig = keyFile["config"]
+        for key in localConfig.keys():
+            config[key] = localConfig[key]
     for key in keys:
         sheet = key[1:]
         if keyFile.get_storer(sheet).attrs.isData:
@@ -77,4 +89,10 @@ def HDFtoDict(path):
         else:
             chemicalDict[sheet] = keyFile[sheet]
     keyFile.close()
-    return [DataDict, chemicalDict]
+    return [DataDict, chemicalDict, config]
+
+
+def readConfig():
+    config = configparser.ConfigParser.read('config.ini')
+    return config._sections
+        

@@ -3,6 +3,8 @@ import fileLoading
 import os
 from pandas import DataFrame
 
+dir_path = os.path.dirname(os.path.realpath(__file__)) + '\\'
+
 def checkForExt(filePath, ext):
     if os.path.splitext(os.path.basename(filePath))[1][1:] != ext:
         return filePath + f'.{ext}'
@@ -14,6 +16,9 @@ class Controller:
     def __init__(self):
         self.loadedFiles = {}
         self.chemicalData = {}
+        self.config = fileLoading.readConfig()
+        print(dir_path)
+        print(self.__dict__)
 
     def __enter__(self):
         return self.loadedFiles
@@ -90,7 +95,7 @@ class Controller:
         filePath = checkForExt(filePath, "hdf")
         print(f'Attempting save at {filePath}')
         try:
-            fileLoading.saveDFs(filePath, self.loadedFiles, self.chemicalData)
+            fileLoading.saveDFs(filePath, self.loadedFiles, self.chemicalData, self.config)
             return 1
         except IOError:
             return 0
@@ -102,12 +107,17 @@ class Controller:
             newDataFrames = fileLoading.HDFtoDict(filePath)
             self.loadedFiles = newDataFrames[0]
             self.chemicalData = newDataFrames[1]
+            self.config = newDataFrames[2]
             return 1
         except AttributeError:
             return 0
     
     def getLoadedFile(self, fileName):
         return self.loadedFiles[fileName]
+    
+    def getConfigUnits(self):
+        return self.config.keys()
+    
     
 def getFileType(filePath):
     file_name = os.path.basename(filePath)

@@ -27,6 +27,11 @@ Builder.load_string(
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<PreferencesMenu>
+    MDBoxLayout:
+        orientation: 'horizontal'
+        
+
 <ChemicalAddDialog>
     orientation: 'vertical'
     spacing: dp(12)
