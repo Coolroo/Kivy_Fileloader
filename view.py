@@ -25,11 +25,12 @@ import pandas as pd
 controller = Controller()
 Builder.load_file('AppLayout.kv')
 
-class SubunitDialog(BoxLayout):
+class SubumitDialog(BoxLayout):
     unit = ""
+    confirmButton = ObjectProperty()
     
     def verifyName(self, name):
-        pass
+        if 
     
     def verifyRatio(self, ratio):
         pass
