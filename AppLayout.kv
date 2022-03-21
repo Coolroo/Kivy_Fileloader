@@ -1,6 +1,21 @@
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<SubunitDialog>
+    orientation: 'vertical'
+    spacing: dp(12)
+    size_hint_y: None
+    height: dp(120)
+
+    MDTextField:
+        id: subUnitName
+        text_hint: 'New SubUnit Name'
+        on_text: root.verifyName(self.text)
+
+    MDTextField:
+        id: subUnitRatio
+        text_hint: root.verifyRatio(self.text)
+
 <PreferencesLine>
     on_release: root.dialog.content_cls.selectUnit(root.unit)
 
@@ -39,7 +54,6 @@
             
         MDBoxLayout:
             orientation: 'vertical'
-            spacing: dp(10)
             
             
             MDToolbar:
@@ -50,9 +64,12 @@
                 anchor_title: "center"
                 size_hint_y: None
                 height: dp(40)
+                left_action_items: [["plus-thick", root.addSubUnit()]]
             
             MDLabel:
+                id: standardLabel
                 text: 'Standard:' 
+                size_hint_y: 0.1
                 
             RecycleView:
                 id: subUnits

@@ -25,6 +25,15 @@ import pandas as pd
 controller = Controller()
 Builder.load_file('AppLayout.kv')
 
+class SubunitDialog(BoxLayout):
+    unit = ""
+    
+    def verifyName(self, name):
+        pass
+    
+    def verifyRatio(self, ratio):
+        pass
+
 class PreferencesLine(OneLineListItem):
     unit = StringProperty()
     dialog = ObjectProperty()
@@ -34,24 +43,43 @@ class PreferencesLine(OneLineListItem):
 
 class PreferencesMenu(BoxLayout):
     currUnit = ""
+    subUnitDialog = None
     
     def addSubUnit(self, unit):
-        pass
+        def closeDialog():
+            pass
 
-    def validate(self, text):
-        pass
+        
+        self.subUnitDialog = MDDialog(
+        title=f'New {self.currUnit} subUnit',
+        type="custom",
+        content_cls=PreferencesMenu(),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+            ],
+        )
     
     def selectUnit(self, unit):
-        self.currUnit = unit
         subUnits = controller.getConfigSubUnits(unit)
-        view = self.ids.subUnits
-        view.data = []
-        for subUnit in subUnits:
-            view.data.append(
-                {
-                    "viewclass": "OneLineListItem",
-                    "text": subUnit
-                })
+        if subUnits is not None:
+            self.currUnit = unit
+            view = self.ids.subUnits
+            self.ids.standardLabel.text = f'Standard: {subUnits["standard"]}'
+            view.data = []
+            for subUnit in subUnits:
+                if subUnit != "standard":
+                    view.data.append(
+                        {
+                            "viewclass": "OneLineListItem",
+                            "text": subUnit
+                        })
+
 
 class ChemicalAddDialog(BoxLayout):
     button = ObjectProperty()
