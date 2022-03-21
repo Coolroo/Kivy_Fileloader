@@ -28,12 +28,20 @@ Builder.load_file('AppLayout.kv')
 class SubumitDialog(BoxLayout):
     unit = ""
     confirmButton = ObjectProperty()
+    Ratio = False
+    Name = False
     
-    def verifyName(self, name):
-        if 
+    def verify(self):
+        self.confirmButton.disabled = self.Ratio and self.Name
     
-    def verifyRatio(self, ratio):
-        pass
+    def verifyName(self, name=""):
+        self.Name = name not in controller.getConfigSubUnits(self.unit) and usefulFunctions.isIdentifier(name)
+        self.verify()
+            
+    
+    def verifyRatio(self, ratio=""):
+        self.Ratio = ratio.isnumeric()
+        self.Ratio = True
 
 class PreferencesLine(OneLineListItem):
     unit = StringProperty()
