@@ -139,20 +139,29 @@ class FileRow(OneLineIconListItem):
     originalPath = StringProperty()
     menu = None
     
+    '''Create a drop down menu for any loaded file'''
     def createDropDown(self):
         if not self.menu:
             menu_items = [{
                 "viewclass": "OptionRow",
-                "text": "New Project",
-                "icon": "file",
+                "text": "Display Sheet",
+                "icon": "table-large",
                 "height": dp(40),
                 "on_press": lambda : self.screen.loadFile(),
                 "on_release": lambda : self.closeMenu()
             },
             {
                 "viewclass": "OptionRow",
-                "text": "Save Project",
-                "icon": "content-save",
+                "text": "Import Data",
+                "icon": "database-import",
+                "height": dp(40),
+                "on_press": lambda : self.screen.loadFile(),
+                "on_release": lambda : self.closeMenu()
+            },
+            {
+                "viewclass": "OptionRow",
+                "text": "Delete File",
+                "icon": "delete",
                 "height": dp(40),
                 "on_press": lambda : self.screen.saveFile(),
                 "on_release": lambda : self.closeMenu()
@@ -165,6 +174,7 @@ class FileRow(OneLineIconListItem):
         self.menu.caller = self
         self.menu.open()
 
+    '''Close the menu created when clicking a loaded sheet'''
     def closeMenu(self):
         self.menu.dismiss()
 
@@ -176,6 +186,7 @@ class FileList(Screen):
     chemicalDialog = None
     preferencesDialog = None
     buttonDisabled=True
+
 
     def loadFile(self):
         global controller
@@ -200,6 +211,14 @@ class FileList(Screen):
                 Snackbar(text="Could not load an unsupported file type!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
 
     def saveFile(self):
+        """
+        The saveFile function saves all loaded files to a specified HDF File.
+        
+        :param self: Used to Access the class attributes.
+        :return: None.
+        
+        :doc-author: Trelent
+        """
         global controller
         file = filechooser.save_file(filters = [["HDF File", "*.hdf"]])
         if file:
@@ -212,6 +231,15 @@ class FileList(Screen):
                 print("Could not save file!")
     
     def loadProject(self):
+        """
+        The loadProject function loads a project from the specified file.
+        It does this by first clearing all of the current data, and then loading in new data from the HDF5 file.
+        
+        :param self: Used to Access the class attributes and methods.
+        :return: A boolean value.
+        
+        :doc-author: Trelent
+        """
         global controller
         file = filechooser.open_file(filters = [["HDF File (*.hdf)", "*.hdf"]])
         if file:
