@@ -10,11 +10,12 @@
     MDTextField:
         id: subUnitName
         text_hint: 'New SubUnit Name'
-        on_text: root.verifyName(self.text)
+        on_text: root.verify(self.text, subUnitRatio.text)
 
     MDTextField:
         id: subUnitRatio
-        text_hint: root.verifyRatio(self.text)
+        text_hint: "Subunit Ratio to Standard"
+        on_text: root.verify(subUnitName.text, self.text)
 
 <PreferencesLine>
     on_release: root.dialog.content_cls.selectUnit(root.unit)

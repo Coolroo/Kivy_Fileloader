@@ -25,23 +25,15 @@ import pandas as pd
 controller = Controller()
 Builder.load_file('AppLayout.kv')
 
-class SubumitDialog(BoxLayout):
+class SubunitDialog(BoxLayout):
     unit = ""
     confirmButton = ObjectProperty()
-    Ratio = False
-    Name = False
     
-    def verify(self):
-        self.confirmButton.disabled = self.Ratio and self.Name
-    
-    def verifyName(self, name=""):
-        self.Name = name not in controller.getConfigSubUnits(self.unit) and usefulFunctions.isIdentifier(name)
-        self.verify()
+    def verify(self, name, ratio):
+        nameCheck = name not in controller.getConfigSubUnits(self.unit) and usefulFunctions.isIdentifier(name)
+        ratioCheck = ratio.isnumeric()
+        self.confirmButton.disabled = nameCheck and ratioCheck
             
-    
-    def verifyRatio(self, ratio=""):
-        self.Ratio = ratio.isnumeric()
-        self.Ratio = True
 
 class PreferencesLine(OneLineListItem):
     unit = StringProperty()
@@ -54,27 +46,11 @@ class PreferencesMenu(BoxLayout):
     currUnit = ""
     subUnitDialog = None
     
-    def addSubUnit(self, unit):
-        def closeDialog():
-            pass
-
-        
-        self.subUnitDialog = MDDialog(
-        title=f'New {self.currUnit} subUnit',
-        type="custom",
-        content_cls=PreferencesMenu(),
-        auto_dismiss=False,
-        buttons=[
-                MDFlatButton(
-                    text="CANCEL",
-                    theme_text_color="Custom",
-                    text_color=App.get_running_app().theme_cls.primary_color,
-                    on_press=closeDialog,
-                ),
-            ],
-        )
+    def addSubUnit(self):
+        pass
     
     def selectUnit(self, unit):
+        global controller
         subUnits = controller.getConfigSubUnits(unit)
         if subUnits is not None:
             self.currUnit = unit
@@ -94,6 +70,7 @@ class ChemicalAddDialog(BoxLayout):
     button = ObjectProperty()
         
     def validate(self):
+        global controller
         self.button.disabled = (self.ids.XAxis.text == "" or 
                                 self.ids.YAxis.text == "" or 
                                 self.ids.chemicalName.text == "" or 
@@ -138,25 +115,69 @@ class FileRow(OneLineIconListItem):
     icon = StringProperty()
     originalPath = StringProperty()
     menu = None
+
+    def deleteEntry(self):
+        global controller
+
+        def closeDialog(button):
+            self.confirmDialog.dismiss()
+
+        def confirm(button):
+            val = controller.deleteFile(self.text)
+            if val == 1:
+                Snackbar(text="Successfully Deleted File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            else:
+                Snackbar(text="Could not Delete File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            App.get_running_app().screen.list_files()
+            closeDialog(None)
+
+        self.confirmDialog = MDDialog(
+        title="WARNING!",
+        text="Warning! You are about to delete a sheet, are you sure?",
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                MDFlatButton(
+                    text="CONFIRM",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=confirm,
+                ),
+            ],
+        )
+        self.confirmDialog.open()
     
     def createDropDown(self):
         if not self.menu:
             menu_items = [{
                 "viewclass": "OptionRow",
-                "text": "New Project",
-                "icon": "file",
+                "text": "Import Data",
+                "icon": "database-import",
                 "height": dp(40),
-                "on_press": lambda : self.screen.loadFile(),
-                "on_release": lambda : self.closeMenu()
+                #"on_press": lambda : self.screen.loadFile(),
+                #"on_release": lambda : self.closeMenu()
             },
             {
                 "viewclass": "OptionRow",
-                "text": "Save Project",
-                "icon": "content-save",
+                "text": "Show Data",
+                "icon": "eye",
                 "height": dp(40),
-                "on_press": lambda : self.screen.saveFile(),
-                "on_release": lambda : self.closeMenu()
+                #"on_press": lambda : self.screen.saveFile(),
+                #"on_release": lambda : self.closeMenu()
             },
+            {
+                "viewclass": "OptionRow",
+                "text": "Delete Sheet",
+                "icon": "delete",
+                "height": dp(40),
+                "on_press": lambda : self.deleteEntry(),
+                "on_release": lambda : self.closeMenu()
+            }
             ]
             self.menu = MDDropdownMenu(
                 items=menu_items,

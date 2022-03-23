@@ -149,6 +149,13 @@ class Controller:
         else:
             return None
     
+    def deleteFile(self, fileName):
+        if fileName in self.loadedFiles:
+            del self.loadedFiles[fileName]
+            return 1
+        else:
+            return 0
+    
     
 def getFileType(filePath):
     file_name = os.path.basename(filePath)
