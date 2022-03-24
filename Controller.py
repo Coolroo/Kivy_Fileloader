@@ -59,6 +59,7 @@ class Controller:
     def __getitem__(self, key):
         return self.loadedFiles[key]
     
+    
     def addChemicalData(self, chemicalName, xAxis, yAxis):
         if chemicalName in self.chemicalData or chemicalName in self.loadedFiles:
             print("A chemical species with this name already exists")
@@ -138,7 +139,9 @@ class Controller:
             return 0
     
     def getLoadedFile(self, fileName):
-        return self.loadedFiles[fileName]
+        if fileName in self.loadedFiles:
+            return self.loadedFiles[fileName]
+        return None
     
     def getConfigUnits(self):
         return self.config.keys()

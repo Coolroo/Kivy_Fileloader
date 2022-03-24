@@ -1,5 +1,5 @@
 from argparse import FileType
-from pandas import read_csv, read_excel, HDFStore, read_hdf, ExcelFile
+from pandas import read_csv, read_excel, HDFStore, read_hdf, ExcelFile, Series
 import os
 import configparser
 import numpy as np
@@ -55,7 +55,7 @@ def saveDFs(path, dataFrames, chemicalData, config):
     
     keys = config.keys()
     items = [config[key] for key in keys]
-    newHDF.put("config", np.Series(data=items, index=keys, dtype="string"))
+    #newHDF.put("config", Series(data=items, index=keys, dtype="string"))
     newHDF.flush()
     newHDF.close()
 
