@@ -22,7 +22,7 @@ class Controller:
         self.loadedFiles = {}
         self.chemicalData = {}
         self.config = self.defaultConfig()
-        self.autoSaveInterval = 5
+        self.autoSaveInterval = 300
         self.autoSave()
         
     def defaultConfig(self):
@@ -48,9 +48,6 @@ class Controller:
         concentration["M"] = 1
         concentration["mM"] = 1/1000.0
         
-        config["Date"] = {}
-        date = config["Date"]
-        date["standard"] = "Day/Month/Year"
         
         
         return config

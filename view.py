@@ -563,13 +563,45 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.screen = FileList()
+        self.exitDialog = None
         
-    def on_request_close(self, *args):
-        global controller
-        print("Close Request")
-        controller.doAutoSave()
-        self.stop()
+    def on_request_close(self, *args, **kwargs):
+        self.showExitDialog()
         return True
+    
+    def showExitDialog(self):
+        global controller
+
+        def closeDialog(button):
+            self.exitDialog.dismiss()
+            self.exitDialog = None
+
+        def confirm(button):
+            controller.doAutoSave()
+            self.stop()
+        
+        
+        if not self.exitDialog:
+            self.exitDialog = MDDialog(
+            title="WARNING!",
+            text="Warning! Make sure you save your project before exiting!",
+            auto_dismiss=False,
+            buttons=[
+                    MDFlatButton(
+                        text="CANCEL",
+                        theme_text_color="Custom",
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_press=closeDialog,
+                    ),
+                    MDFlatButton(
+                        text="CONFIRM",
+                        theme_text_color="Custom",
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_press=confirm,
+                    ),
+                ],
+            )
+            self.exitDialog.open()
 
     def build(self):
         Window.bind(on_request_close=self.on_request_close)
