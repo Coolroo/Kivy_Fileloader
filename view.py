@@ -119,6 +119,7 @@ class FileRow(OneLineIconListItem):
     icon = StringProperty()
     originalPath = StringProperty()
     dataDialog = None
+    importDialog = None
     menu = None
 
     def deleteEntry(self):
@@ -156,6 +157,7 @@ class FileRow(OneLineIconListItem):
             ],
         )
         self.confirmDialog.open()
+
     
     def showData(self):
         global controller
@@ -195,12 +197,14 @@ class FileRow(OneLineIconListItem):
             use_pagination=True,
             rows_num=len(dataFile.columns),
             column_data=[[usefulFunctions.column_string(i+1), dp(30)] for i in range(len(dataFile.columns))],
-            row_data=[row.array for i, row in dataFile.iterrows()],
+            row_data=[row.array.insert() for i, row in dataFile.iterrows()],
         )
         self.dataDialog.content_cls.clear_widgets()
         self.dataDialog.content_cls.add_widget(dataFrame)
         self.dataDialog.open()
         
+    def importData(self):
+        pass
     
     '''Create a drop down menu for any loaded file'''
     def createDropDown(self):
@@ -218,16 +222,8 @@ class FileRow(OneLineIconListItem):
                 "text": "Import Data",
                 "icon": "database-import",
                 "height": dp(40),
-                "on_press": lambda : self.screen.loadFile(),
+                "on_press": lambda : self.importData(),
                 "on_release": lambda : self.closeMenu()
-            },
-            {
-                "viewclass": "OptionRow",
-                "text": "Delete File",
-                "icon": "delete",
-                "height": dp(40),
-                #"on_press": lambda : self.screen.saveFile(),
-                #"on_release": lambda : self.closeMenu()
             },
             {
                 "viewclass": "OptionRow",
@@ -484,9 +480,7 @@ class FileList(Screen):
                     "unit": unit,
                     "dialog": self.preferencesDialog
                 })
-        self.preferencesDialog.open()
-        
-        
+        self.preferencesDialog.open()       
         
     def list_files(self):
         global controller
