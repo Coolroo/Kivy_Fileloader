@@ -17,6 +17,7 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.tooltip import MDTooltip
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
+from kivymd.uix.datatables import MDDataTable
 
 import usefulFunctions
 from plyer import filechooser
@@ -24,6 +25,9 @@ import pandas as pd
 
 controller = Controller()
 Builder.load_file('AppLayout.kv')
+
+class DataTableDisplay(BoxLayout):
+    pass
 
 class SubumitDialog(BoxLayout):
     unit = ""
@@ -137,7 +141,53 @@ class ChemicalData(OneLineIconListItem):
 class FileRow(OneLineIconListItem):
     icon = StringProperty()
     originalPath = StringProperty()
+    dataDialog = None
     menu = None
+    
+    def showData(self):
+        global controller
+
+        def closeDialog(button):
+            self.dataDialog.dismiss()
+
+        def finishLoad(button):
+            pass
+
+        dataKey = self.text
+        dataFile = controller.getLoadedFile(dataKey)["file"]
+        #print([row.array.insert(0, usefulFunctions.column_string(i + 1)) for i, row in dataFile.iterrows()])
+        self.dataDialog = MDDialog(
+        title=f'Displaying {dataKey}',
+        type="custom",
+        content_cls=DataTableDisplay(),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog
+                ),
+                MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                ),
+            ],
+        )
+        dataFrame = MDDataTable(
+            pos_hint = {},
+            pos = self.dataDialog.pos,
+            use_pagination=True,
+            rows_num=len(dataFile.columns),
+            column_data=[[usefulFunctions.column_string(i+1), dp(30)] for i in range(len(dataFile.columns))],
+            row_data=[row.array for i, row in dataFile.iterrows()],
+        )
+        self.dataDialog.content_cls.clear_widgets()
+        self.dataDialog.content_cls.add_widget(dataFrame)
+        self.dataDialog.open()
+        
     
     '''Create a drop down menu for any loaded file'''
     def createDropDown(self):
@@ -147,7 +197,7 @@ class FileRow(OneLineIconListItem):
                 "text": "Display Sheet",
                 "icon": "table-large",
                 "height": dp(40),
-                "on_press": lambda : self.screen.loadFile(),
+                "on_press": lambda : self.showData(),
                 "on_release": lambda : self.closeMenu()
             },
             {
