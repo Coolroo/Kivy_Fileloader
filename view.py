@@ -6,6 +6,7 @@ from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.screenmanager import Screen
 from kivy.metrics import dp
 from kivy.app import App
+from kivy.core.window import Window
 
 
 from kivymd.app import MDApp
@@ -22,6 +23,8 @@ from kivymd.uix.datatables import MDDataTable
 import usefulFunctions
 from plyer import filechooser
 import pandas as pd
+import tabloo
+from threading import Thread
 
 controller = Controller()
 Builder.load_file('AppLayout.kv')
@@ -29,7 +32,7 @@ Builder.load_file('AppLayout.kv')
 class DataTableDisplay(BoxLayout):
     pass
 
-class SubumitDialog(BoxLayout):
+class SubunitDialog(BoxLayout):
     unit = ""
     confirmButton = ObjectProperty()
     
@@ -161,16 +164,24 @@ class FileRow(OneLineIconListItem):
     
     def showData(self):
         global controller
-
+        #dataFile = controller.getLoadedFile(self.text)["file"]
+        #thread = Thread(target=tabloo.show, args=(dataFile,))
+        #thread.start()
+        #tabloo.show(dataFile)
+        
         def closeDialog(button):
             self.dataDialog.dismiss()
 
-        def finishLoad(button):
-            pass
-
         dataKey = self.text
         dataFile = controller.getLoadedFile(dataKey)["file"]
-        #print([row.array.insert(0, usefulFunctions.column_string(i + 1)) for i, row in dataFile.iterrows()])
+        rowList = []
+        for i, row in dataFile.iterrows():
+            thisRow = [usefulFunctions.column_string(i+1)]
+            for val in row:
+                thisRow.append(val)
+            rowList.append(thisRow)
+        for row in rowList:
+            print(row)
         self.dataDialog = MDDialog(
         title=f'Displaying {dataKey}',
         type="custom",
@@ -178,33 +189,61 @@ class FileRow(OneLineIconListItem):
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
-                    text="CANCEL",
+                    text="CLOSE",
                     theme_text_color="Custom",
                     text_color=App.get_running_app().theme_cls.primary_color,
                     on_press=closeDialog
-                ),
-                MDFlatButton(
-                    text="OK",
-                    theme_text_color="Custom",
-                    text_color=App.get_running_app().theme_cls.primary_color,
-                    on_release=finishLoad,
-                ),
+                )
             ],
         )
         dataFrame = MDDataTable(
             pos_hint = {},
             pos = self.dataDialog.pos,
             use_pagination=True,
-            rows_num=len(dataFile.columns),
-            column_data=[[usefulFunctions.column_string(i+1), dp(30)] for i in range(len(dataFile.columns))],
-            row_data=[row.array.insert() for i, row in dataFile.iterrows()],
+            #rows_num=len(dataFile),
+            column_data=[[usefulFunctions.column_string(i), dp(30)] for i in range(len(dataFile.columns) + 1)],
+            row_data=rowList,
         )
         self.dataDialog.content_cls.clear_widgets()
         self.dataDialog.content_cls.add_widget(dataFrame)
         self.dataDialog.open()
         
     def importData(self):
-        pass
+        global controller
+        #dataFile = controller.getLoadedFile(self.text)["file"]
+        #thread = Thread(target=tabloo.show, args=(dataFile,))
+        #thread.start()
+        #tabloo.show(dataFile)
+        
+        def closeDialog(button):
+            self.dataDialog.dismiss()
+
+        dataKey = self.text
+        dataFile = controller.getLoadedFile(dataKey)["file"]
+        self.dataDialog = MDDialog(
+        title=f'Displaying {dataKey}',
+        type="custom",
+        content_cls=DataTableDisplay(),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CLOSE",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog
+                )
+            ],
+        )
+        dataFrame = MDDataTable(
+            pos_hint = {},
+            pos = self.dataDialog.pos,
+            use_pagination=True,
+            #rows_num=len(dataFile),
+            column_data=[[usefulFunctions.column_string(i), dp(30)] for i in range(len(dataFile.columns) + 1)],
+        )
+        self.dataDialog.content_cls.clear_widgets()
+        self.dataDialog.content_cls.add_widget(dataFrame)
+        self.dataDialog.open()
     
     '''Create a drop down menu for any loaded file'''
     def createDropDown(self):
@@ -524,8 +563,16 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.screen = FileList()
+        
+    def on_request_close(self, *args):
+        global controller
+        print("Close Request")
+        controller.doAutoSave()
+        self.stop()
+        return True
 
     def build(self):
+        Window.bind(on_request_close=self.on_request_close)
         menu_items = [{
             "viewclass": "OptionRow",
             "text": "New Project",

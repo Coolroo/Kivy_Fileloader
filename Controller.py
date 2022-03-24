@@ -2,8 +2,13 @@
 import fileLoading
 import os
 from pandas import DataFrame
+from threading import Timer
+from datetime import datetime
 
-dir_path = os.path.dirname(os.path.realpath(__file__)) + '\\'
+
+AUTOSAVE_PATH = os.path.dirname(os.path.realpath(__file__)) + "/AutoSaves/"
+
+AUTOSAVE_FILE_NAME = "auto"
 
 def checkForExt(filePath, ext):
     if os.path.splitext(os.path.basename(filePath))[1][1:] != ext:
@@ -17,8 +22,8 @@ class Controller:
         self.loadedFiles = {}
         self.chemicalData = {}
         self.config = self.defaultConfig()
-        print(dir_path)
-        print(self.__dict__)
+        self.autoSaveInterval = 5
+        self.autoSave()
         
     def defaultConfig(self):
         config = {}
@@ -43,6 +48,11 @@ class Controller:
         concentration["M"] = 1
         concentration["mM"] = 1/1000.0
         
+        config["Date"] = {}
+        date = config["Date"]
+        date["standard"] = "Day/Month/Year"
+        
+        
         return config
 
     def __enter__(self):
@@ -59,8 +69,25 @@ class Controller:
     def __getitem__(self, key):
         return self.loadedFiles[key]
     
+    def doAutoSave(self):
+        if not os.path.exists(AUTOSAVE_PATH):
+            print("Path does not exist")
+            os.mkdir(AUTOSAVE_PATH)
+        now = datetime.now()
+        if not os.path.exists(AUTOSAVE_PATH + AUTOSAVE_FILE_NAME + now.strftime("%m/%d/%Y, %H:%M:%S")):
+            self.save(AUTOSAVE_PATH + AUTOSAVE_FILE_NAME + now.strftime("_%Y-%m-%d-(%H-%M-%S)"))
+        self.autoSave()
     
-    def addChemicalData(self, chemicalName, xAxis, yAxis):
+    def autoSave(self):
+        t = Timer(self.autoSaveInterval, self.doAutoSave)
+        t.daemon = True
+        t.start()
+        
+    def loadAutosave(self):
+        pass
+            
+    
+    def addChemicalData(self, chemicalName, xAxis, yAxis, xStandard, yStandard):
         if chemicalName in self.chemicalData or chemicalName in self.loadedFiles:
             print("A chemical species with this name already exists")
             return 0
@@ -68,6 +95,8 @@ class Controller:
             self.chemicalData[chemicalName] = {}
             self.chemicalData[chemicalName]["xAxis"] = xAxis
             self.chemicalData[chemicalName]["yAxis"] = yAxis
+            self.chemicalData[chemicalName]["xStandard"] = xStandard
+            self.chemicalData[chemicalName]["yStandard"] = yStandard
             self.chemicalData[chemicalName]["data"] = DataFrame({xAxis: [], yAxis: []})
             return 1
     
@@ -156,6 +185,13 @@ class Controller:
         if fileName in self.loadedFiles:
             del self.loadedFiles[fileName]
             return 1
+        else:
+            return 0
+        
+    def importData(self, chemicalName, xAxis, yAxis):
+        if chemicalName in self.chemicalData:
+            thisData = self.chemicalData[chemicalName]
+            thisData = 0
         else:
             return 0
     
