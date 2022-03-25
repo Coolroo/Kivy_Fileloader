@@ -23,11 +23,59 @@ from kivymd.uix.datatables import MDDataTable
 import usefulFunctions
 from plyer import filechooser
 import pandas as pd
-import tabloo
 from threading import Thread
 
 controller = Controller()
 Builder.load_file('AppLayout.kv')
+
+class ImportData(BoxLayout):
+    menu = None
+
+    def setDataSetitem(self, text, item):
+        self.ids.chemDataDropDown.set_item(text)
+        self.menu.dismiss()
+
+    def showDataSetMenu(self, caller):
+        if self.menu:
+            self.menu.dismiss()
+        menu_items = []
+        for dataCategory in controller.getDataSets():
+            menu_items.append(
+                {
+                    "viewclass": "OneLineListItem",
+                    "text": dataCategory,
+                    "height": dp(40),
+                    "width": dp(150),
+                    "on_release": lambda x=dataCategory: self.setDataSetitem(self.text, caller)
+                    })
+        self.menu= MDDropdownMenu(
+            items=menu_items,
+            width_mult=3
+        )
+        self.menu.caller = caller
+        self.menu.open()
+        
+
+    def showSubUnitMenu(self, caller):
+        if self.menu:
+            self.menu.dismiss()
+        menu_items = []
+        for dataCategory in controller.getDataSets():
+            menu_items.append(
+                {
+                    "viewclass": "OneLineListItem",
+                    "text": dataCategory,
+                    "height": dp(40),
+                    "width": dp(150),
+                    "on_release": lambda x=dataCategory: self.set_item(self.text, caller)
+                    })
+        self.menu= MDDropdownMenu(
+            items=menu_items,
+            width_mult=3
+        )
+
+    def validate(self, button, id):
+        pass
 
 class DataTableDisplay(BoxLayout):
     pass
@@ -39,8 +87,7 @@ class SubunitDialog(BoxLayout):
     def verify(self, name, ratio):
         nameCheck = name not in controller.getConfigSubUnits(self.unit) and usefulFunctions.isIdentifier(name)
         ratioCheck = ratio.isnumeric()
-        self.confirmButton.disabled = nameCheck and ratioCheck
-            
+        self.confirmButton.disabled = nameCheck and ratioCheck     
 
 class PreferencesLine(OneLineListItem):
     unit = StringProperty()
@@ -72,20 +119,57 @@ class PreferencesMenu(BoxLayout):
                             "text": subUnit
                         })
 
-
-class ChemicalAddDialog(BoxLayout):
+class DatasetAddDialog(BoxLayout):
     button = ObjectProperty()
-        
+    menu = None
+    
+    def closeMenu(self):
+        self.menu.dismiss()
+
+    def set_item(self, button, unit):
+        button.current_item = unit
+
     def validate(self):
         global controller
-        self.button.disabled = (self.ids.XAxis.text == "" or 
-                                self.ids.YAxis.text == "" or 
-                                self.ids.chemicalName.text == "" or 
-                                self.ids.chemicalName.text in controller.getChemicalData() or 
-                                self.ids.chemicalName.text in controller.getLoadedFiles() or 
-                                not usefulFunctions.isIdentifier(self.ids.chemicalName.text))
-    
-        
+        self.button.disabled = (self.ids.measurementUnit.current_item == "" or 
+                                self.ids.measurementUnit.current_item not in controller.getConfigUnits() or
+                                self.ids.datasetName.text == "" or 
+                                self.ids.datasetName.text in controller.getDataSets() or 
+                                not usefulFunctions.isIdentifier(self.ids.datasetNametext.text))
+                                
+    def buttonPress(self,button, buttonID):
+        menu_items = []
+        if buttonID == "measurementUnit":
+            for Unit in controller.getConfigUnits():
+                menu_items.append({
+            "viewclass": "OneLineListItem",
+            "text": Unit,
+            "height": dp(40),
+            "on_press": lambda x=f'{Unit}' : button.set_item(x),
+            "on_release": lambda : self.closeMenu()
+        })
+        elif buttonID == "measurementStandard" and self.ids.measurementUnit.current_item in controller.getConfigUnits():
+            Unit = self.ids.measurementUnit.current_item
+            if Unit in controller.getConfigUnits():
+                for SubUnit in controller.getConfigSubUnits("%s" %Unit):
+                    menu_items.append({
+            "viewclass": "OneLineListItem",
+            "text": SubUnit,
+            "height": dp(40),
+            "on_press": lambda x=f'{SubUnit}' : button.set_item(x),
+            "on_release": lambda : self.closeMenu()
+        })
+        else:
+            return
+        if self.menu:
+            self.menu.dismiss()
+        self.menu= MDDropdownMenu(
+            items=menu_items,
+            width_mult=3
+        )
+        self.menu.caller = button
+        self.menu.open()
+         
 class ImportExcelFile(OneLineAvatarIconListItem):
     sheet = StringProperty()
     confirmButton = ObjectProperty(None)
@@ -105,7 +189,6 @@ class ImportExcelFile(OneLineAvatarIconListItem):
         
         self.confirmButton.disabled = not validOption
         
-
 class TooltipLeftIconWidget(IconLeftWidget, MDTooltip):
     pass
 
@@ -115,7 +198,7 @@ class ImportFile(BoxLayout):
 class OptionRow(OneLineIconListItem):
     icon = StringProperty()
 
-class ChemicalData(OneLineIconListItem):
+class DataSetData(OneLineIconListItem):
     icon = StringProperty()
 
 class FileRow(OneLineIconListItem):
@@ -210,20 +293,16 @@ class FileRow(OneLineIconListItem):
         
     def importData(self):
         global controller
-        #dataFile = controller.getLoadedFile(self.text)["file"]
-        #thread = Thread(target=tabloo.show, args=(dataFile,))
-        #thread.start()
-        #tabloo.show(dataFile)
         
         def closeDialog(button):
-            self.dataDialog.dismiss()
+            self.chemImportDialog.dismiss()
 
         dataKey = self.text
         dataFile = controller.getLoadedFile(dataKey)["file"]
-        self.dataDialog = MDDialog(
+        self.chemImportDialog = MDDialog(
         title=f'Displaying {dataKey}',
         type="custom",
-        content_cls=DataTableDisplay(),
+        content_cls=ImportData(),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -234,16 +313,9 @@ class FileRow(OneLineIconListItem):
                 )
             ],
         )
-        dataFrame = MDDataTable(
-            pos_hint = {},
-            pos = self.dataDialog.pos,
-            use_pagination=True,
-            #rows_num=len(dataFile),
-            column_data=[[usefulFunctions.column_string(i), dp(30)] for i in range(len(dataFile.columns) + 1)],
-        )
-        self.dataDialog.content_cls.clear_widgets()
-        self.dataDialog.content_cls.add_widget(dataFrame)
-        self.dataDialog.open()
+        content = self.chemImportDialog.content_cls.ids
+        chemDataList = content.chemDataDropDown
+        self.chemImportDialog.open()
     
     '''Create a drop down menu for any loaded file'''
     def createDropDown(self):
@@ -261,6 +333,7 @@ class FileRow(OneLineIconListItem):
                 "text": "Import Data",
                 "icon": "database-import",
                 "height": dp(40),
+                "width": dp(120),
                 "on_press": lambda : self.importData(),
                 "on_release": lambda : self.closeMenu()
             },
@@ -289,7 +362,7 @@ class FileList(Screen):
 
     importDialog = None
     importDialogExcel = None
-    chemicalDialog = None
+    datasetDialog = None
     preferencesDialog = None
     buttonDisabled=True
 
@@ -400,24 +473,14 @@ class FileList(Screen):
         self.importDialog.content_cls.ids.fileLabel.text = f'Importing file {filePath}'
         self.importDialog.open()
     
-    def showChemicalDialog(self):
+    def showDatasetDialog(self):
         global controller
-
         def closeDialog(button):
-            self.chemicalDialog.dismiss()
+            self.datasetDialog.dismiss()
 
         def finishLoad(button):
-           content = self.chemicalDialog.content_cls
-           chemicalName = content.ids.chemicalName.text
-           yAxis = content.ids.YAxis.text
-           xAxis = content.ids.XAxis.text
-           
-           controller.addChemicalData(chemicalName, xAxis, yAxis)
-           self.list_files()
-           closeDialog(button)
-           
+            pass
 
-        textInput = MDTextField()
         button = MDFlatButton(
                     text="OK",
                     theme_text_color="Custom",
@@ -425,10 +488,10 @@ class FileList(Screen):
                     on_release=finishLoad,
                     disabled=True,
                 )
-        self.chemicalDialog = MDDialog(
-        title="Please select a name for the chemical species",
+        self.datasetDialog = MDDialog(
+        title="Create a new dataset",
         type="custom",
-        content_cls=ChemicalAddDialog(button=button),
+        content_cls=DatasetAddDialog(button=button),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -440,7 +503,10 @@ class FileList(Screen):
                 button,
             ],
         )
-        self.chemicalDialog.open()
+        self.datasetDialog.open()
+
+        content = self.datasetDialog.content_cls.ids
+            
         
     def showImportDialogExcel(self, filePath, sheets):
         global controller
@@ -540,20 +606,20 @@ class FileList(Screen):
         fileKeys = files.keys()
         for file in fileKeys:
             add_file(files[file], file)
-        self.list_chemicals()
+        self.list_datasets()
                 
-    def list_chemicals(self):
+    def list_datasets(self):
         global controller
         
-        def add_file(chemicalData):
-            self.ids.chemicalList.data.append(
+        def add_file(datasetData):
+            self.ids.datasetList.data.append(
                 {
-                    "viewclass": "ChemicalData",
-                    "text": chemicalData,
+                    "viewclass": "DataSetData",
+                    "text": datasetData,
                     "icon": "atom"
                 })
-        self.ids.chemicalList.data = []
-        keys = controller.chemicalData.keys()
+        self.ids.datasetList.data = []
+        keys = controller.dataSets.keys()
         for key in keys:
             add_file(key)
 

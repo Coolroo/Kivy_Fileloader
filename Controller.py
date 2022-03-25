@@ -20,7 +20,7 @@ class Controller:
     
     def __init__(self):
         self.loadedFiles = {}
-        self.chemicalData = {}
+        self.dataSets = {}
         self.config = self.defaultConfig()
         self.autoSaveInterval = 300
         self.autoSave()
@@ -84,22 +84,32 @@ class Controller:
         pass
             
     
-    def addChemicalData(self, chemicalName, xAxis, yAxis, xStandard, yStandard):
-        if chemicalName in self.chemicalData or chemicalName in self.loadedFiles:
-            print("A chemical species with this name already exists")
+    def addDataSet(self, dataSet, xAxis, yAxis, xStandard, yStandard):
+        if dataSet in self.dataSets or dataSet in self.loadedFiles:
+            print("A dataset species with this name already exists")
             return 0
         else:
-            self.chemicalData[chemicalName] = {}
-            self.chemicalData[chemicalName]["xAxis"] = xAxis
-            self.chemicalData[chemicalName]["yAxis"] = yAxis
-            self.chemicalData[chemicalName]["xStandard"] = xStandard
-            self.chemicalData[chemicalName]["yStandard"] = yStandard
-            self.chemicalData[chemicalName]["data"] = DataFrame({xAxis: [], yAxis: []})
+            self.dataSets[dataSet] = {}
+            self.dataSets[dataSet]["xAxis"] = xAxis
+            self.dataSets[dataSet]["yAxis"] = yAxis
+            self.dataSets[dataSet]["xStandard"] = xStandard
+            self.dataSets[dataSet]["yStandard"] = yStandard
+            self.dataSets[dataSet]["data"] = {}
             return 1
     
+    def importDataSet(self, dataName, fileName, data):
+        if dataName not in self.dataSets:
+            print("This dataGroup does not exist")
+            return 0
+        else:
+            dataGroup = self.dataSets[dataName]["data"]
+            if fileName not in dataGroup["data"]:
+                dataGroup[fileName] = []
+            dataGroup[fileName].append(data)
+            return 1
     
     def loadFile(self, filePath, fileName):
-        if fileName in self.loadedFiles or fileName in self.chemicalData:
+        if fileName in self.loadedFiles or fileName in self.dataSets:
             print("A file with this name already exists, please choose another name")
             return 0
         try:
@@ -115,7 +125,7 @@ class Controller:
             return 0
         
     def loadExcelSheet(self, filePath, sheetName, fileName):
-        if fileName in self.loadedFiles or fileName in self.chemicalData:
+        if fileName in self.loadedFiles or fileName in self.dataSets:
             print("A file with this name already exists, please choose another name")
             return 0
         try:
@@ -135,10 +145,10 @@ class Controller:
         :doc-author: Trelent
         """
         self.loadedFiles = {}
-        self.chemicalData = {}
+        self.dataSets = {}
     
-    def getChemicalData(self):
-        return self.chemicalData
+    def getDataSets(self):
+        return self.dataSets
     
     def getLoadedFiles(self):
         return self.loadedFiles
@@ -147,7 +157,7 @@ class Controller:
         filePath = checkForExt(filePath, "hdf")
         print(f'Attempting save at {filePath}')
         try:
-            fileLoading.saveDFs(filePath, self.loadedFiles, self.chemicalData, self.config)
+            fileLoading.saveDFs(filePath, self.loadedFiles, self.dataSets, self.config)
             return 1
         except IOError:
             return 0
@@ -158,7 +168,7 @@ class Controller:
         try:
             newDataFrames = fileLoading.HDFtoDict(filePath)
             self.loadedFiles = newDataFrames[0]
-            self.chemicalData = newDataFrames[1]
+            self.dataSets = newDataFrames[1]
             self.config = newDataFrames[2]
             return 1
         except AttributeError:
@@ -185,9 +195,9 @@ class Controller:
         else:
             return 0
         
-    def importData(self, chemicalName, xAxis, yAxis):
-        if chemicalName in self.chemicalData:
-            thisData = self.chemicalData[chemicalName]
+    def importData(self, dataSet, xAxis, yAxis):
+        if dataSet in self.dataSets:
+            thisData = self.dataSets[dataSet]
             thisData = 0
         else:
             return 0

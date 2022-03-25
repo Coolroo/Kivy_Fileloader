@@ -1,6 +1,40 @@
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<ImportData>
+    size_hint: (0.9, None)
+    height: dp(300)
+    
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDDropDownItem:
+            size_hint: (0.7, 0.4)
+            id: chemDataDropDown
+            text: "Please select a dataset"
+            on_release: root.showDatasetMenu(self)
+
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint: (0.7, 0.4)
+
+            MDTextField:
+                id: startCell
+                on_text: root.validate(self, self.id)
+                text_hint: "Please input the range's starting cell (In Excel Format ie: A, AA, BA)" 
+
+            
+            MDTextField:
+                id: endCell
+                on_text: root.validate(self, self.id)
+                text_hint: "Please input the range's ending cell (In Excel Format ie: A, AA, BA)"
+
+        MDDropDownItem:
+            size_hint: (0.7, 0.4)
+            id: dropDown
+            on_release: root.showSubUnitMenu(self)
+    
+
 <DataTableDisplay>
     size_hint: (0.9, None)
     height: dp(500)
@@ -90,40 +124,34 @@
                     orientation: 'vertical'
             
         
-        
-
-<ChemicalAddDialog>
+<DatasetAddDialog>
     orientation: 'vertical'
-    spacing: dp(12)
     size_hint_y: None
-    height: dp(120)
-    
-    MDTextField:
-        id: chemicalName
-        hint_text: "Name of the chemical species"
-        on_text: root.validate()
+    height: dp(180)
     
     MDBoxLayout:
-        orientation: "horizontal"
-        
-        MDLabel:
-            text: "X-Axis Units"
-            
+        spacing: dp(5)
+        orientation: "vertical"
+
         MDTextField:
-            id: XAxis
-            hint_text: "Units for the X-Axis"
+            id: datasetName
+            hint_text: "Name of the dataset"
             on_text: root.validate()
             
-    MDBoxLayout:
-        orientation: "horizontal"
-        
-        MDLabel:
-            text: "Y-Axis Units"
-            
-        MDTextField:
-            hint_text: "Units for the Y-Axis"
-            id: YAxis
-            on_text: root.validate()
+        MDDropDownItem:
+            id: measurementUnit
+            size_hint_y: None
+            height: dp(120)
+            text: "Measurement Unit"
+            on_release: root.buttonPress(self, "measurementUnit")
+
+        MDDropDownItem:
+            id: measurementStandard
+            size_hint_y: None
+            height: dp(120)
+            text: "Measurement Standard"
+            on_release: root.buttonPress(self, "measurementStandard")
+                
     
     
 <ImportExcelFile>
@@ -163,7 +191,7 @@
     IconLeftWidget:
         icon: root.icon
         
-<ChemicalData>
+<DatasetData>
     TooltipIconLeftWidget:
         icon: root.icon
         pos_hint: {"center_x": .5, "center_y": .5}
@@ -225,10 +253,10 @@
                     md_bg_color: self.theme_cls.accent_color
                     type: "top"
                     anchor_title: "center"
-                    left_action_items: [["plus-thick", lambda x: root.showChemicalDialog(), "Add Chemical Species"]]
+                    left_action_items: [["plus-thick", lambda x: root.showDatasetDialog(), "Add Dataset Species"]]
                 
                 RecycleView:
-                    id: chemicalList
+                    id: datasetList
                     key_viewclass: 'viewclass'
                     key_size: 'height'
 
