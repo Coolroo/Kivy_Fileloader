@@ -135,7 +135,7 @@ class DatasetAddDialog(BoxLayout):
                                 self.ids.measurementUnit.current_item not in controller.getConfigUnits() or
                                 self.ids.datasetName.text == "" or 
                                 self.ids.datasetName.text in controller.getDataSets() or 
-                                not usefulFunctions.isIdentifier(self.ids.datasetNametext.text))
+                                not usefulFunctions.isIdentifier(self.ids.datasetName.text))
                                 
     def buttonPress(self,button, buttonID):
         menu_items = []
@@ -198,7 +198,7 @@ class ImportFile(BoxLayout):
 class OptionRow(OneLineIconListItem):
     icon = StringProperty()
 
-class DataSetData(OneLineIconListItem):
+class DatasetData(OneLineIconListItem):
     icon = StringProperty()
 
 class FileRow(OneLineIconListItem):
@@ -479,7 +479,19 @@ class FileList(Screen):
             self.datasetDialog.dismiss()
 
         def finishLoad(button):
-            pass
+            datasetName = self.datasetDialog.content_cls.ids.datasetName
+            measurementUnit = self.datasetDialog.content_cls.ids.measurementUnit
+            measurementStandard = self.datasetDialog.content_cls.ids.measurementStandard
+
+            retval = controller.addDataSet(datasetName.text, measurementUnit.text, measurementStandard.text)
+            if retval == 0:
+                Snackbar(text=f'Could not add dataset', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            else:
+                Snackbar(text=f'Successfully added dataset', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            closeDialog(None)
+            self.list_files()
+            
+
 
         button = MDFlatButton(
                     text="OK",
@@ -611,15 +623,15 @@ class FileList(Screen):
     def list_datasets(self):
         global controller
         
-        def add_file(datasetData):
+        def add_file(data):
             self.ids.datasetList.data.append(
                 {
-                    "viewclass": "DataSetData",
-                    "text": datasetData,
+                    "viewclass": "DatasetData",
+                    "text": data,
                     "icon": "atom"
                 })
         self.ids.datasetList.data = []
-        keys = controller.dataSets.keys()
+        keys = controller.getDataSets().keys()
         for key in keys:
             add_file(key)
 

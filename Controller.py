@@ -84,16 +84,14 @@ class Controller:
         pass
             
     
-    def addDataSet(self, dataSet, xAxis, yAxis, xStandard, yStandard):
+    def addDataSet(self, dataSet, Unit, Standard):
         if dataSet in self.dataSets or dataSet in self.loadedFiles:
             print("A dataset species with this name already exists")
             return 0
         else:
             self.dataSets[dataSet] = {}
-            self.dataSets[dataSet]["xAxis"] = xAxis
-            self.dataSets[dataSet]["yAxis"] = yAxis
-            self.dataSets[dataSet]["xStandard"] = xStandard
-            self.dataSets[dataSet]["yStandard"] = yStandard
+            self.dataSets[dataSet]["unit"] = Unit
+            self.dataSets[dataSet]["standard"] = Standard
             self.dataSets[dataSet]["data"] = {}
             return 1
     
