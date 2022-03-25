@@ -1,5 +1,5 @@
 
-import fileLoading
+import Model
 import os
 from pandas import DataFrame
 from threading import Timer
@@ -17,54 +17,27 @@ def checkForExt(filePath, ext):
         return filePath
 
 class Controller:
-    
     def __init__(self):
-        self.loadedFiles = {}
-        self.dataSets = {}
-        self.config = self.defaultConfig()
-        self.autoSaveInterval = 300
+        self.model = Model.Model()
         self.autoSave()
-        
-    def defaultConfig(self):
-        config = {}
-        config["Mass"] = {}
-        mass = config["Mass"]
-        mass["standard"] = "g"
-        mass["g"] = 1
-        mass["mg"] = 1/1000.0
-        mass["ug"] = 1/1000000.0
-        mass["ng"] = 1/1000000000.0
-        mass["kg"] = 1000
-        
-        config["Volume"] = {}
-        volume = config["Volume"]
-        volume["standard"] = "L"
-        volume["L"] = 1
-        volume["mL"] = 1/1000.0
-        
-        config["Concentration"] = {}
-        concentration = config["Concentration"]
-        concentration["standard"] = "M"
-        concentration["M"] = 1
-        concentration["mM"] = 1/1000.0
-        
-        
-        
-        return config
+
+    @property
+    def dataSets(self):
+        self.model.dataSets
 
     def __enter__(self):
-        return self.loadedFiles
+        return self.model.loadedFiles
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
     def __iter__(self):
-        keys = self.loadedFiles.keys()
+        keys = self.model.loadedFiles.keys()
         for key in keys:
-            yield self.loadedFiles[key]
+            yield self.model.loadedFiles[key]
     
     def __getitem__(self, key):
-        return self.loadedFiles[key]
+        return self.model.loadedFiles[key]
     
     def doAutoSave(self):
         if not os.path.exists(AUTOSAVE_PATH):
@@ -76,7 +49,7 @@ class Controller:
         self.autoSave()
     
     def autoSave(self):
-        t = Timer(self.autoSaveInterval, self.doAutoSave)
+        t = Timer(self.model.autoSaveInterval, self.doAutoSave)
         t.daemon = True
         t.start()
         
@@ -85,34 +58,34 @@ class Controller:
             
     
     def addDataSet(self, dataSet, Unit, Standard):
-        if dataSet in self.dataSets or dataSet in self.loadedFiles:
+        if dataSet in self.model.dataSets or dataSet in self.model.loadedFiles:
             print("A dataset species with this name already exists")
             return 0
         else:
-            self.dataSets[dataSet] = {}
-            self.dataSets[dataSet]["unit"] = Unit
-            self.dataSets[dataSet]["standard"] = Standard
-            self.dataSets[dataSet]["data"] = {}
+            self.model.dataSets[dataSet] = {}
+            self.model.dataSets[dataSet]["unit"] = Unit
+            self.model.dataSets[dataSet]["standard"] = Standard
+            self.model.dataSets[dataSet]["data"] = []
             return 1
     
     def importDataSet(self, dataName, fileName, data):
-        if dataName not in self.dataSets:
+        if dataName not in self.model.dataSets:
             print("This dataGroup does not exist")
             return 0
         else:
-            dataGroup = self.dataSets[dataName]["data"]
+            dataGroup = self.model.dataSets[dataName]["data"]
             if fileName not in dataGroup["data"]:
                 dataGroup[fileName] = []
             dataGroup[fileName].append(data)
             return 1
     
     def loadFile(self, filePath, fileName):
-        if fileName in self.loadedFiles or fileName in self.dataSets:
+        if fileName in self.model.loadedFiles or fileName in self.model.dataSets:
             print("A file with this name already exists, please choose another name")
             return 0
         try:
-            newFile = fileLoading.loadFile(filePath)
-            self.loadedFiles[fileName] = newFile
+            newFile = Model.loadFile(filePath)
+            self.model.loadedFiles[fileName] = newFile
             print(f'Successfully loaded file')
             return 1
         except IOError:
@@ -123,12 +96,12 @@ class Controller:
             return 0
         
     def loadExcelSheet(self, filePath, sheetName, fileName):
-        if fileName in self.loadedFiles or fileName in self.dataSets:
+        if fileName in self.model.loadedFiles or fileName in self.model.dataSets:
             print("A file with this name already exists, please choose another name")
             return 0
         try:
-            newFile = fileLoading.loadExcelSheet(filePath, sheetName)
-            self.loadedFiles[fileName] = newFile
+            newFile = Model.loadExcelSheet(filePath, sheetName)
+            self.model.loadedFiles[fileName] = newFile
             return 1
         except:
             print("Loading Excel file Failed")
@@ -142,20 +115,20 @@ class Controller:
         
         :doc-author: Trelent
         """
-        self.loadedFiles = {}
-        self.dataSets = {}
+        self.model.loadedFiles = {}
+        self.model.dataSets = {}
     
     def getDataSets(self):
-        return self.dataSets
+        return self.model.dataSets
     
     def getLoadedFiles(self):
-        return self.loadedFiles
+        return self.model.loadedFiles
     
     def save(self, filePath):
         filePath = checkForExt(filePath, "hdf")
         print(f'Attempting save at {filePath}')
         try:
-            fileLoading.saveDFs(filePath, self.loadedFiles, self.dataSets, self.config)
+            Model.saveDFs(filePath, self.model.loadedFiles, self.model.dataSets, self.model.config)
             return 1
         except IOError:
             return 0
@@ -164,39 +137,40 @@ class Controller:
     def loadProject(self, filePath):
         print(f'Trying to get HDF file at path {filePath}')
         try:
-            newDataFrames = fileLoading.HDFtoDict(filePath)
-            self.loadedFiles = newDataFrames[0]
-            self.dataSets = newDataFrames[1]
-            self.config = newDataFrames[2]
+            newDataFrames = Model.HDFtoDict(filePath)
+            self.model.loadedFiles = newDataFrames[0]
+            self.model.dataSets = newDataFrames[1]
+            self.model.config = newDataFrames[2]
             return 1
         except AttributeError:
             return 0
     
     def getLoadedFile(self, fileName):
-        if fileName in self.loadedFiles:
-            return self.loadedFiles[fileName]
+        if fileName in self.model.loadedFiles:
+            return self.model.loadedFiles[fileName]
         return None
     
     def getConfigUnits(self):
-        return self.config.keys()
+        return self.model.config.keys()
     
     def getConfigSubUnits(self, unit):
-        if unit in self.config:
-            return self.config[unit]
+        if unit in self.model.config:
+            return self.model.config[unit]
         else:
             return None
     
     def deleteFile(self, fileName):
-        if fileName in self.loadedFiles:
-            del self.loadedFiles[fileName]
+        if fileName in self.model.loadedFiles:
+            del self.model.loadedFiles[fileName]
             return 1
         else:
             return 0
         
-    def importData(self, dataSet, xAxis, yAxis):
-        if dataSet in self.dataSets:
-            thisData = self.dataSets[dataSet]
-            thisData = 0
+    def importData(self, dataSet, dataAxis, timeAxis, dataUnit):
+        if dataSet not in self.model.dataSets or len(dataAxis) != len(timeAxis) or dataUnit not in self.model.config[self.model.dataSets[dataSet]["unit"]]:
+            for i in range(len(dataAxis)):
+                self.model.dataSets[dataSet]["data"].append({"measurement": dataAxis[i], "date": timeAxis[i], "unit": dataUnit})
+            return 1
         else:
             return 0
     
