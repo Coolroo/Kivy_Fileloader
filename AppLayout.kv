@@ -156,12 +156,13 @@
     
 <ImportExcelFile>
     orientation: "horizontal"
-    on_release: root.setStatus(check, sheetName)
+    on_release: root.setStatus(check)
     
     CheckboxLeftWidget:
         id: check
         group: "check"
         textbox: sheetName
+        on_release: root.setStatus(check)
     
     MDTextField:
         id: sheetName
@@ -185,6 +186,7 @@
     MDTextField:
         id: dialogTextBox
         hint_text: "File Name (No special characters, only numbers and letters)"
+        on_text: root.checkValidity(self.text)
 
 
 <OptionRow>

@@ -176,7 +176,7 @@ class ImportExcelFile(OneLineAvatarIconListItem):
     confirmButton = ObjectProperty(None)
     textbox = ObjectProperty(None)
     
-    def setStatus(self, check, textBox):
+    def setStatus(self, check):
         check.active = not check.active
         
         self.checkValidity(check)
@@ -194,7 +194,11 @@ class TooltipLeftIconWidget(IconLeftWidget, MDTooltip):
     pass
 
 class ImportFile(BoxLayout):
+    button = ObjectProperty()
     Path = StringProperty()
+    
+    def checkValidity(self, text):
+        self.button.disabled = not (usefulFunctions.isIdentifier(text) or usefulFunctions.isIdentifier(text))
 
 class OptionRow(OneLineIconListItem):
     icon = StringProperty()
@@ -451,10 +455,17 @@ class FileList(Screen):
 
 
         if not self.importDialog:
+            button = MDFlatButton(
+                        text="OK",
+                        theme_text_color="Custom",
+                        text_color=App.get_running_app().theme_cls.primary_color,
+                        on_release=finishLoad,
+                        disabled=True
+                    )
             self.importDialog = MDDialog(
             title="Please select a name for the imported file",
             type="custom",
-            content_cls=ImportFile(),
+            content_cls=ImportFile(button=button),
             auto_dismiss=False,
             buttons=[
                     MDFlatButton(
@@ -463,12 +474,7 @@ class FileList(Screen):
                         text_color=App.get_running_app().theme_cls.primary_color,
                         on_press=closeDialog
                     ),
-                    MDFlatButton(
-                        text="OK",
-                        theme_text_color="Custom",
-                        text_color=App.get_running_app().theme_cls.primary_color,
-                        on_release=finishLoad,
-                    ),
+                    button
                 ],
             )
         self.importDialog.content_cls.ids.fileLabel.text = f'Importing file {filePath}'
