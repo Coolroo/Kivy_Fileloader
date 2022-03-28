@@ -129,6 +129,7 @@ class DatasetAddDialog(BoxLayout):
 
     def set_item(self, button, unit):
         button.current_item = unit
+        self.validate()
 
     def validate(self):
         global controller
