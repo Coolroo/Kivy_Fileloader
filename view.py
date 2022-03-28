@@ -127,13 +127,17 @@ class DatasetAddDialog(BoxLayout):
     def closeMenu(self):
         self.menu.dismiss()
 
-    def set_item(self, button, unit):
-        button.current_item = unit
+    def unitUpdate(self, button, unit):
+        self.ids.measurementStandard.current_item = ""
+        button.set_item(unit)
+        self.validate()
 
     def validate(self):
         global controller
         self.button.disabled = (self.ids.measurementUnit.current_item == "" or 
                                 self.ids.measurementUnit.current_item not in controller.getConfigUnits() or
+                                self.ids.measurementStandard.current_item  == "" or
+                                self.ids.measurementStandard.current_item not in controller.getConfigSubUnits(self.ids.measurementUnit.current_item) or
                                 self.ids.datasetName.text == "" or 
                                 self.ids.datasetName.text in controller.getDataSets() or 
                                 not usefulFunctions.isIdentifier(self.ids.datasetName.text))
@@ -146,7 +150,7 @@ class DatasetAddDialog(BoxLayout):
             "viewclass": "OneLineListItem",
             "text": Unit,
             "height": dp(40),
-            "on_press": lambda x=f'{Unit}' : button.set_item(x),
+            "on_press": lambda x=f'{Unit}' : self.unitUpdate(button, x),
             "on_release": lambda : self.closeMenu()
         })
         elif buttonID == "measurementStandard" and self.ids.measurementUnit.current_item in controller.getConfigUnits():
@@ -157,7 +161,7 @@ class DatasetAddDialog(BoxLayout):
             "viewclass": "OneLineListItem",
             "text": SubUnit,
             "height": dp(40),
-            "on_press": lambda x=f'{SubUnit}' : button.set_item(x),
+            "on_press": lambda x=f'{SubUnit}' : self.unitUpdate(button, x),
             "on_release": lambda : self.closeMenu()
         })
         else:
