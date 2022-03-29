@@ -8,7 +8,8 @@ class Model:
             self.loadedFiles = {}
             self.dataSets = {}
             self.config = self.defaultConfig()
-            self.autoSaveInterval = 300
+            self.autoSaveInterval = 5
+            self.maxAutoSaves = 5
             
     def defaultConfig(self):
         config = {}

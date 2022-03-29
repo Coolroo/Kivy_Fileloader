@@ -44,9 +44,16 @@ class Controller:
             print("Path does not exist")
             os.mkdir(AUTOSAVE_PATH)
         now = datetime.now()
+        self.autoSaveFileLimit()
         if not os.path.exists(AUTOSAVE_PATH + AUTOSAVE_FILE_NAME + now.strftime("%m/%d/%Y, %H:%M:%S")):
             self.save(AUTOSAVE_PATH + AUTOSAVE_FILE_NAME + now.strftime("_%Y-%m-%d-(%H-%M-%S)"))
         self.autoSave()
+
+    def autoSaveFileLimit(self):
+        numFiles = len([name for name in os.listdir(AUTOSAVE_PATH) if os.path.isfile(os.path.join(AUTOSAVE_PATH, name))])
+        if numFiles >= self.model.maxAutoSaves:
+            oldestFile = min([os.path.join(AUTOSAVE_PATH) + file for file in os.listdir(AUTOSAVE_PATH)], key=os.path.getctime)
+            os.remove(os.path.join(AUTOSAVE_PATH,oldestFile))
     
     def autoSave(self):
         t = Timer(self.model.autoSaveInterval, self.doAutoSave)
