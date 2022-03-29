@@ -216,6 +216,7 @@ class FileRow(OneLineIconListItem):
     dataDialog = None
     importDialog = None
     menu = None
+    importDatasetDialog = None
 
     def deleteEntry(self):
         global controller
@@ -253,7 +254,6 @@ class FileRow(OneLineIconListItem):
         )
         self.confirmDialog.open()
 
-    
     def showData(self):
         global controller
         #dataFile = controller.getLoadedFile(self.text)["file"]
@@ -362,6 +362,40 @@ class FileRow(OneLineIconListItem):
         self.menu.caller = self
         self.menu.open()
 
+    def dataSetImportDialog(self):
+        global controller
+        
+        def closeDialog(button):
+            self.importDatasetDialog.dismiss()
+
+        def finishLoad(button):
+            pass
+
+        button = MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                    disabled=True,
+                )
+        self.importDatasetDialog = MDDialog(
+        title="Import data from dataset",
+        type="custom",
+        content_cls=DatasetAddDialog(button=button),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                button,
+            ],
+        )
+        self.datasetDialog.open()
+
+        content = self.datasetDialog.content_cls.ids
     '''Close the menu created when clicking a loaded sheet'''
     def closeMenu(self):
         self.menu.dismiss()
@@ -530,8 +564,7 @@ class FileList(Screen):
         )
         self.datasetDialog.open()
 
-        content = self.datasetDialog.content_cls.ids
-            
+        content = self.datasetDialog.content_cls.ids 
         
     def showImportDialogExcel(self, filePath, sheets):
         global controller

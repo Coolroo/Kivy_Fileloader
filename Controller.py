@@ -81,7 +81,7 @@ class Controller:
             return 0
         self.model.dataSets[dataSet][dataGroup] = []
     
-    def importDataSet(self, dataSet, dataGroup, fileName,  measurements, dates):
+    def importDataSet(self, dataSet, dataGroup, fileName, measurements, dates):
         if dataSet not in self.model.dataSets:
             print("This dataSet does not exist")
             return 0
@@ -176,14 +176,6 @@ class Controller:
     def deleteFile(self, fileName):
         if fileName in self.model.loadedFiles:
             del self.model.loadedFiles[fileName]
-            return 1
-        else:
-            return 0
-        
-    def importData(self, dataSet, dataAxis, timeAxis, dataUnit):
-        if dataSet not in self.model.dataSets or len(dataAxis) != len(timeAxis) or dataUnit not in self.model.config[self.model.dataSets[dataSet]["unit"]]:
-            for i in range(len(dataAxis)):
-                self.model.dataSets[dataSet]["data"].append({"measurement": dataAxis[i], "date": timeAxis[i], "unit": dataUnit})
             return 1
         else:
             return 0

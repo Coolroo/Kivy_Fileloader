@@ -81,7 +81,7 @@ def saveDFs(path, dataFrames, chemicalData, config):
         newHDF.get_storer(key).attrs.isData=True
     keys = chemicalData.keys()
     for key in keys:
-        newHDF.put(key, DataFrame(chemicalData[key]["data"]))
+        newHDF.put(key, DataFrame(chemicalData[key]))
         newHDF.get_storer(key).attrs.isData=False
     
     keys = config.keys()
@@ -118,7 +118,7 @@ def HDFtoDict(path):
             DataDict[sheet]["fileType"] = keyFile.get_storer(sheet).attrs.fileType
             DataDict[sheet]["fileName"] = keyFile.get_storer(sheet).attrs.fileName
         else:
-            chemicalDict[sheet] = keyFile[sheet]
+            chemicalDict[sheet] = keyFile[sheet].to_dict()
     keyFile.close()
     return [DataDict, chemicalDict, config]
 
