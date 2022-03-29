@@ -1,6 +1,36 @@
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<ImportDatasetData>
+    orientation: "vertical"
+    size_hint_y: None
+    height: dp(200)
+    
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDTextField:
+            size_hint_x: 0.1
+            id: column
+            text_hint: "Data column"
+
+        MDTextField: 
+            size_hint_x: 0.1
+            id: startRow
+            text_hint: "Starting row"
+        
+        MDTextField:
+            size_hint_x: 0.1
+            id: endRow
+            text_hint: "Final row"
+
+        MDTextField:
+            size_hint_x: 0.1
+            id: invalidID
+            text_hint: "Invalid value"
+        
+
+
 <ImportData>
     size_hint: (0.9, None)
     height: dp(300)

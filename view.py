@@ -29,6 +29,9 @@ import tabloo
 controller = Controller()
 Builder.load_file('AppLayout.kv')
 
+class ImportDatasetData(BoxLayout):
+    button = ObjectProperty()
+
 class ImportData(BoxLayout):
     menu = None
 
@@ -272,8 +275,6 @@ class FileRow(OneLineIconListItem):
             for val in row:
                 thisRow.append(val)
             rowList.append(thisRow)
-        for row in rowList:
-            print(row)
         self.dataDialog = MDDialog(
         title=f'Displaying {dataKey}',
         type="custom",
@@ -299,32 +300,6 @@ class FileRow(OneLineIconListItem):
         self.dataDialog.content_cls.clear_widgets()
         self.dataDialog.content_cls.add_widget(dataFrame)
         self.dataDialog.open()
-        
-    def importData(self):
-        global controller
-        
-        def closeDialog(button):
-            self.chemImportDialog.dismiss()
-
-        dataKey = self.text
-        dataFile = controller.getLoadedFile(dataKey)["file"]
-        self.chemImportDialog = MDDialog(
-        title=f'Displaying {dataKey}',
-        type="custom",
-        content_cls=ImportData(),
-        auto_dismiss=False,
-        buttons=[
-                MDFlatButton(
-                    text="CLOSE",
-                    theme_text_color="Custom",
-                    text_color=App.get_running_app().theme_cls.primary_color,
-                    on_press=closeDialog
-                )
-            ],
-        )
-        content = self.chemImportDialog.content_cls.ids
-        chemDataList = content.chemDataDropDown
-        self.chemImportDialog.open()
     
     '''Create a drop down menu for any loaded file'''
     def createDropDown(self):
@@ -343,7 +318,7 @@ class FileRow(OneLineIconListItem):
                 "icon": "database-import",
                 "height": dp(40),
                 "width": dp(120),
-                "on_press": lambda : self.importData(),
+                "on_press": lambda : self.dataSetImportDialog(),
                 "on_release": lambda : self.closeMenu()
             },
             {
@@ -381,7 +356,7 @@ class FileRow(OneLineIconListItem):
         self.importDatasetDialog = MDDialog(
         title="Import data from dataset",
         type="custom",
-        content_cls=DatasetAddDialog(button=button),
+        content_cls=ImportDatasetData(button=button),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -393,9 +368,8 @@ class FileRow(OneLineIconListItem):
                 button,
             ],
         )
-        self.datasetDialog.open()
+        self.importDatasetDialog.open()
 
-        content = self.datasetDialog.content_cls.ids
     '''Close the menu created when clicking a loaded sheet'''
     def closeMenu(self):
         self.menu.dismiss()
