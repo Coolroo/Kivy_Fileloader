@@ -63,20 +63,27 @@ class Controller:
             return 0
         else:
             self.model.dataSets[dataSet] = {}
-            self.model.dataSets[dataSet]["unit"] = Unit
-            self.model.dataSets[dataSet]["standard"] = Standard
-            self.model.dataSets[dataSet]["data"] = []
             return 1
     
-    def importDataSet(self, dataName, fileName, data):
-        if dataName not in self.model.dataSets:
-            print("This dataGroup does not exist")
+    def addDataGroup(self, dataSet, dataGroup):
+        if dataSet not in self.model.dataSets:
+            print("This dataSet does not exist")
+            return 0
+        if dataGroup in self.model.dataSets[dataSet]:
+            print("This dataGroup already exists")
+            return 0
+        self.model.dataSets[dataSet][dataGroup] = []
+    
+    def importDataSet(self, dataSet, dataGroup, fileName,  measurements, dates):
+        if dataSet not in self.model.dataSets:
+            print("This dataSet does not exist")
             return 0
         else:
-            dataGroup = self.model.dataSets[dataName]["data"]
-            if fileName not in dataGroup["data"]:
-                dataGroup[fileName] = []
-            dataGroup[fileName].append(data)
+            if dataGroup not in self.model.dataSets[dataSet]:
+                print("This datagroup does not exist for the dataset " + dataSet)
+                return 0
+            dataGroup = self.model.dataSets[dataSet][dataGroup]
+            dataGroup.append({"source": fileName, "measurements": measurements, "dates": dates})
             return 1
     
     def loadFile(self, filePath, fileName):
