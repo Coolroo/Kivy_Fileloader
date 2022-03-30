@@ -143,7 +143,7 @@ class Controller:
             print("This dataset does not exist")
             return 0
         else:
-            return self.dataSets[dataSet]
+            return self.model.dataSets[dataSet]
     
     def getLoadedFiles(self):
         return self.model.loadedFiles

@@ -27,7 +27,7 @@ from threading import Thread
 import tabloo
 
 controller = Controller()
-Builder.load_file('AppLayout.kv')
+Builder.load_file('AppLayout.kv') 
 
 class ImportDatasetData(BoxLayout):
     button = ObjectProperty()
@@ -146,6 +146,8 @@ class AddDataGroup(BoxLayout):
         self.menu.caller = caller
         self.menu.open()
     
+class newItem(OneLineListItem):
+    pass
 
 class DataTableDisplay(BoxLayout):
     pass
@@ -330,10 +332,13 @@ class DatasetData(OneLineIconListItem):
         def closeDialog(button):
             self.dataGroupListDialog.dismiss()
 
+        dataSet = self.text
+        newItems = [OneLineListItem(text=data) for data in controller.getDataGroups(dataSet).keys()]
         self.dataGroupListDialog = MDDialog(
-        title="Import data from dataset",
-        type="simple",
+        title=f'All DataGroups for the dataset ({self.text})',
+        type="custom",
         auto_dismiss=False,
+        items = newItems,
         buttons=[
                 MDFlatButton(
                     text="CANCEL",
@@ -342,7 +347,6 @@ class DatasetData(OneLineIconListItem):
                     on_press=closeDialog,
                 ),
             ],
-        items = [OneLineListItem(text=f'{DataGroup}') for DataGroup in controller.getDataGroups(self.text)]
         )
         self.dataGroupListDialog.open()
 
@@ -434,7 +438,7 @@ class FileRow(OneLineIconListItem):
         dataFile = controller.getLoadedFile(dataKey)["file"]
         rowList = []
         for i, row in dataFile.iterrows():
-            thisRow = [usefulFunctions.column_string(i+1)]
+            thisRow = [i + 1]
             for val in row:
                 thisRow.append(val)
             rowList.append(thisRow)
