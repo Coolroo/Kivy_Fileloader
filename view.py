@@ -54,7 +54,7 @@ class ImportDatasetData(BoxLayout):
                     "text": dataCategory,
                     "height": dp(40),
                     "width": dp(150),
-                    "on_release": lambda x=f'{dataCategory}': self.setDropdownItem(dataCategory)
+                    "on_release": lambda x=f'{dataCategory}': self.setDropdownItem(self.ids.dataSet, x)
                     })
         self.menu= MDDropdownMenu(
             items=menu_items,
@@ -63,7 +63,7 @@ class ImportDatasetData(BoxLayout):
         self.menu.caller = caller
         self.menu.open()
 
-    def showDataSetMenu(self, caller):
+    def showDataGroupMenu(self, caller):
         global controller
         if self.menu:
             self.menu.dismiss()
@@ -75,7 +75,7 @@ class ImportDatasetData(BoxLayout):
                     "text": dataCategory,
                     "height": dp(40),
                     "width": dp(150),
-                    "on_release": lambda x=f'{dataCategory}': self.setDropdownItem(self.ids.dataSet, dataCategory)
+                    "on_release": lambda x=f'{dataCategory}': self.setDropdownItem(self.ids.dataGroup, x)
                     })
         self.menu= MDDropdownMenu(
             items=menu_items,
@@ -99,7 +99,7 @@ class ImportDatasetData(BoxLayout):
                     "text": Unit,
                     "height": dp(40),
                     "width": dp(150),
-                    "on_release": lambda x=f'{Unit}': self.setDropdownItem(self.ids.subUnit, self.text)
+                    "on_release": lambda x=f'{Unit}': self.setDropdownItem(self.ids.subUnit, x)
                     })
         self.menu= MDDropdownMenu(
             items=menu_items,
@@ -107,6 +107,45 @@ class ImportDatasetData(BoxLayout):
         )
         self.menu.caller = caller
         self.menu.open()
+
+class AddDataGroup(BoxLayout):
+    button = ObjectProperty()
+    dataSet = StringProperty()
+    menu = None
+
+    def validate(self):
+        self.button.disabled = not usefulFunctions.isIdentifier(self.ids.name.text) or  self.ids.name.text in controller.getDataSets()[self.dataSet]
+
+    def setDropdownItem(self, dropdown, text):
+        dropdown.set_item(text)
+        self.menu.dismiss()
+        self.menu = None
+        self.validate()
+
+    def showUnitMenu(self, caller):
+        global controller
+        if self.dataSet not in controller.getDataSets():
+            return
+        if self.menu:
+            self.menu.dismiss()
+            self.menu = None
+        menu_items = []
+        for Unit in controller.getConfigUnits():
+            menu_items.append(
+                {
+                    "viewclass": "OneLineListItem",
+                    "text": Unit,
+                    "height": dp(40),
+                    "width": dp(150),
+                    "on_release": lambda x=f'{Unit}': self.setDropdownItem(self.ids.unit, x)
+                    })
+        self.menu= MDDropdownMenu(
+            items=menu_items,
+            width_mult=3
+        )
+        self.menu.caller = caller
+        self.menu.open()
+    
 
 class DataTableDisplay(BoxLayout):
     pass
@@ -241,15 +280,25 @@ class DatasetData(OneLineIconListItem):
     icon = StringProperty()
     menu = None
     dataGroupDialog = None
+    dataGroupListDialog = None
 
     def addDataGroup(self):
         global controller
         
         def closeDialog(button):
-            self.importDatasetDialog.dismiss()
+            self.dataGroupDialog.dismiss()
 
         def finishLoad(button):
-            pass
+            dataGroupName = self.dataGroupDialog.content_cls.ids.name.text
+            Unit = self.dataGroupDialog.content_cls.ids.unit.current_item
+
+            returnVal = controller.addDataGroup(self.text, dataGroupName, Unit)
+
+            if returnVal > 0:
+                Snackbar(text="Successfully Added DataGroup!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            else:
+                Snackbar(text="Could Not Add DataGroup!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            closeDialog(None)
 
         button = MDFlatButton(
                     text="OK",
@@ -258,10 +307,10 @@ class DatasetData(OneLineIconListItem):
                     on_release=finishLoad,
                     disabled=True,
                 )
-        self.importDatasetDialog = MDDialog(
+        self.dataGroupDialog = MDDialog(
         title="Import data from dataset",
         type="custom",
-        content_cls=ImportDatasetData(button=button),
+        content_cls=AddDataGroup(button=button, dataSet=self.text),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -273,7 +322,29 @@ class DatasetData(OneLineIconListItem):
                 button,
             ],
         )
-        self.importDatasetDialog.open()
+        self.dataGroupDialog.open()
+
+    def listDataGroups(self):
+        global controller
+        
+        def closeDialog(button):
+            self.dataGroupListDialog.dismiss()
+
+        self.dataGroupListDialog = MDDialog(
+        title="Import data from dataset",
+        type="simple",
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+            ],
+        items = [OneLineListItem(text=f'{DataGroup}') for DataGroup in controller.getDataGroups(self.text)]
+        )
+        self.dataGroupListDialog.open()
 
     def showMenu(self):
 
@@ -289,6 +360,14 @@ class DatasetData(OneLineIconListItem):
                 "on_press": lambda : self.addDataGroup(),
                 "on_release": lambda : closeMenu()
             },
+            {
+                "viewclass": "OptionRow",
+                "text": "List Datagroups",
+                "icon": "format-list-bulleted",
+                "height": dp(40),
+                "on_press": lambda : self.listDataGroups(),
+                "on_release": lambda : closeMenu()
+            }
             ]
             self.menu = MDDropdownMenu(
                 items=menu_items,
@@ -530,7 +609,6 @@ class FileList(Screen):
                 Snackbar(text="Could not Load Project!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
         self.list_files()
 
-    
     def showImportDialog(self, filePath):
         global controller
 
@@ -548,6 +626,7 @@ class FileList(Screen):
                 self.list_files()
                 return
             Snackbar(text="Could Not Load File!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            closeDialog(None)
 
 
         if not self.importDialog:
@@ -582,6 +661,7 @@ class FileList(Screen):
 
         def closeDialog(button):
             self.datasetDialog.dismiss()
+            self.datasetDialog = None
 
         def finishLoad(button):
             datasetName = self.datasetDialog.content_cls.ids.datasetName
@@ -602,7 +682,7 @@ class FileList(Screen):
                     text="OK",
                     theme_text_color="Custom",
                     text_color=App.get_running_app().theme_cls.primary_color,
-                    on_release=finishLoad,
+                    on_press=finishLoad,
                     disabled=True,
                 )
         self.datasetDialog = MDDialog(
@@ -621,8 +701,6 @@ class FileList(Screen):
             ],
         )
         self.datasetDialog.open()
-
-        content = self.datasetDialog.content_cls.ids 
         
     def showImportDialogExcel(self, filePath, sheets):
         global controller
@@ -732,9 +810,8 @@ class FileList(Screen):
             self.ids.datasetList.data.append(
                 {
                     "viewclass": "DatasetData",
-                    "text": data,
+                    "text": f'{data}',
                     "icon": "atom",
-                    "on_release": self.showDatasetMenu()
                 })
         self.ids.datasetList.data = []
         keys = controller.getDataSets().keys()

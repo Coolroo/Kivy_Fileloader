@@ -90,7 +90,7 @@ def saveDFs(path, dataFrames, chemicalData, config):
         newHDF.get_storer(key).attrs.isData=False
     
     keys = config.keys()
-    items = [config[key] for key in keys]
+    #items = [config[key] for key in keys]
     #newHDF.put("config", Series(data=items, index=keys, dtype="string"))
     newHDF.flush()
     newHDF.close()

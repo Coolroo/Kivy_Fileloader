@@ -80,7 +80,23 @@
                     hint_text: "Starting row (DATA)"
                     on_text: root.validate()
                 
-    
+<AddDataGroup>
+    orientation: "vertical"
+    size_hint_y: None
+    height: dp(200)
+
+    MDTextField:
+        id: name
+        hint_text: "Datagroup Name"
+        on_text: root.validate()
+        size_hint_x: 0.5
+        pos_hint: {"center_x": 0.5}
+
+    MDDropDownItem:
+        id: unit
+        text: "Datagroup's Unit"
+        on_release: root.showUnitMenu(self)
+        pos_hint: {"center_x": 0.5}
 
 <DataTableDisplay>
     size_hint: (0.9, None)
