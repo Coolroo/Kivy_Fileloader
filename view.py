@@ -31,10 +31,25 @@ Builder.load_file('AppLayout.kv')
 
 class ImportDatasetData(BoxLayout):
     button = ObjectProperty()
+    dataFrame = ObjectProperty()
     menu = None
 
     def validate(self):
-        pass
+        dataSet = self.ids.dataSet.current_item
+        dataGroup = self.ids.dataGroup.current_item
+        subUnit = self.ids.subUnit.current_item
+        numRows = self.ids.numRows.text
+        invalidID = self.ids.invalidID.text
+        columnDates = self.ids.columnDates.text
+        startRowDates = self.ids.startRowDates.text
+        columnData = self.ids.columnData.text
+        startRowData = self.ids.startRowData.text
+
+        validateDatasets = dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroups(self.ids.dataSet.current_item)[self.ids.dataGroup.current_item]["unit"])
+        validNumbers = numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit()
+        validColumns = columnDates in self.dataFrame.columns and columnData in self.dataFrame.columns
+        self.button.disabled = validateDatasets or not validNumbers or not validColumns
+
 
     def setDropdownItem(self, dropdown, text):
         dropdown.set_item(text)
@@ -86,13 +101,13 @@ class ImportDatasetData(BoxLayout):
 
 
     def showUnitMenu(self, caller):
-        if self.ids.dataSet.current_item not in controller.getDataSets():
+        if self.ids.dataSet.current_item not in controller.getDataSets() or self.ids.dataGroup.current_item not in controller.getDataGroups(self.ids.dataSet.current_item):
             return
         if self.menu:
             self.menu.dismiss()
             self.menu = None
         menu_items = []
-        for Unit in controller.getConfigSubUnits(self.ids.dataSet.current_item):
+        for Unit in controller.getConfigSubUnits(controller.getDataGroups(self.ids.dataSet.current_item)[self.ids.dataGroup.current_item]["unit"]):
             menu_items.append(
                 {
                     "viewclass": "OneLineListItem",
@@ -523,7 +538,7 @@ class FileRow(OneLineIconListItem):
         self.importDatasetDialog = MDDialog(
         title="Import data from dataset",
         type="custom",
-        content_cls=ImportDatasetData(button=button),
+        content_cls=ImportDatasetData(button=button, dataSet=controller.getLoadedFiles()[self.text]),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
