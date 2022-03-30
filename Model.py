@@ -30,6 +30,11 @@ class Model:
         concentration = config["Concentration"]
         concentration["M"] = 1
         concentration["mM"] = 1/1000.0
+
+        config["Parts"] = {}
+        parts = config["Parts"]
+        parts["ppm"] = 1
+        parts["ppb"] = 1/1000.0
         
         
         

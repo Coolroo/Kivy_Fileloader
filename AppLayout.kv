@@ -4,65 +4,82 @@
 <ImportDatasetData>
     orientation: "vertical"
     size_hint_y: None
-    height: dp(200)
-    
-    MDBoxLayout:
-        orientation: "vertical"
-
-        MDTextField:
-            size_hint_x: 0.1
-            id: column
-            text_hint: "Data column"
-
-        MDTextField: 
-            size_hint_x: 0.1
-            id: startRow
-            text_hint: "Starting row"
-        
-        MDTextField:
-            size_hint_x: 0.1
-            id: endRow
-            text_hint: "Final row"
-
-        MDTextField:
-            size_hint_x: 0.1
-            id: invalidID
-            text_hint: "Invalid value"
-        
-
-
-<ImportData>
-    size_hint: (0.9, None)
     height: dp(300)
-    
+
     MDBoxLayout:
         orientation: "vertical"
-
-        MDDropDownItem:
-            size_hint: (0.7, 0.4)
-            id: chemDataDropDown
-            text: "Please select a dataset"
-            on_release: root.showDatasetMenu(self)
+        spacing: dp(5)
 
         MDBoxLayout:
             orientation: "horizontal"
-            size_hint: (0.7, 0.4)
 
-            MDTextField:
-                id: startCell
-                on_text: root.validate(self, self.id)
-                text_hint: "Please input the range's starting cell (In Excel Format ie: A, AA, BA)" 
+            MDDropDownItem:
+                pos_hint: {"center_x": 0.5}
+                id: dataSet
+                text: "Please select the DataSet"
+                on_release: root.showDataSetMenu(self)
 
-            
-            MDTextField:
-                id: endCell
-                on_text: root.validate(self, self.id)
-                text_hint: "Please input the range's ending cell (In Excel Format ie: A, AA, BA)"
+            MDDropDownItem:
+                pos_hint: {"center_x": 0.5}
+                id: dataGroup
+                text: "Please select the DataGroup"
+                on_release: root.showDataGroupMenu(self)
 
         MDDropDownItem:
-            size_hint: (0.7, 0.4)
-            id: dropDown
-            on_release: root.showSubUnitMenu(self)
+            pos_hint: {"center_x": 0.5}
+            id: subUnit
+            text: "Please select the data's unit"
+            on_release: root.showUnitMenu(self)
+
+        MDTextField:
+            pos_hint: {"center_x": 0.5}
+            size_hint_x: 0.3
+            id: numRows
+            hint_text: "Number of data points"
+            on_text: root.validate()
+
+        MDTextField:
+            pos_hint: {"center_x": 0.5}
+            size_hint_x: 0.3
+            id: invalidID
+            hint_text: "Invalid value"
+            on_text: root.validate()
+
+    
+        MDBoxLayout:
+            orientation: "horizontal"
+
+            MDBoxLayout:
+                orientation: "vertical"
+
+                MDTextField:
+                    size_hint_x: 0.3
+                    id: columnDates
+                    hint_text: "Starting column (DATES)"
+                    on_text: root.validate()
+
+                MDTextField: 
+                    size_hint_x: 0.3
+                    id: startRowDates
+                    hint_text: "Starting row (DATES)"
+                    on_text: root.validate()
+                
+                    
+            MDBoxLayout:
+                orientation: "vertical"
+
+                MDTextField:
+                    size_hint_x: 0.3
+                    id: columnData
+                    hint_text: "Date column (DATA)"
+                    on_text: root.validate()
+
+                MDTextField: 
+                    size_hint_x: 0.3
+                    id: startRowData
+                    hint_text: "Starting row (DATA)"
+                    on_text: root.validate()
+                
     
 
 <DataTableDisplay>
@@ -77,12 +94,12 @@
 
     MDTextField:
         id: subUnitName
-        text_hint: 'New SubUnit Name'
+        hint_text: 'New SubUnit Name'
         on_text: root.verify(self.text, subUnitRatio.text)
 
     MDTextField:
         id: subUnitRatio
-        text_hint: "Subunit Ratio to Standard"
+        hint_text: "Subunit Ratio to Standard"
         on_text: root.verify(subUnitName.text, self.text)
 
 <PreferencesLine>
@@ -224,6 +241,7 @@
         icon: root.icon
         
 <DatasetData>
+    on_release: self.showMenu()
     TooltipIconLeftWidget:
         icon: root.icon
         pos_hint: {"center_x": .5, "center_y": .5}

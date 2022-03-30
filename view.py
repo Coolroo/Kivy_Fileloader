@@ -31,15 +31,19 @@ Builder.load_file('AppLayout.kv')
 
 class ImportDatasetData(BoxLayout):
     button = ObjectProperty()
-
-class ImportData(BoxLayout):
     menu = None
 
-    def setDataSetitem(self, text, item):
-        self.ids.chemDataDropDown.set_item(text)
+    def validate(self):
+        pass
+
+    def setDropdownItem(self, dropdown, text):
+        dropdown.set_item(text)
         self.menu.dismiss()
+        self.menu = None
+        self.validate()
 
     def showDataSetMenu(self, caller):
+        global controller
         if self.menu:
             self.menu.dismiss()
         menu_items = []
@@ -50,7 +54,7 @@ class ImportData(BoxLayout):
                     "text": dataCategory,
                     "height": dp(40),
                     "width": dp(150),
-                    "on_release": lambda x=dataCategory: self.setDataSetitem(self.text, caller)
+                    "on_release": lambda x=f'{dataCategory}': self.setDropdownItem(dataCategory)
                     })
         self.menu= MDDropdownMenu(
             items=menu_items,
@@ -58,9 +62,9 @@ class ImportData(BoxLayout):
         )
         self.menu.caller = caller
         self.menu.open()
-        
 
-    def showSubUnitMenu(self, caller):
+    def showDataSetMenu(self, caller):
+        global controller
         if self.menu:
             self.menu.dismiss()
         menu_items = []
@@ -71,15 +75,38 @@ class ImportData(BoxLayout):
                     "text": dataCategory,
                     "height": dp(40),
                     "width": dp(150),
-                    "on_release": lambda x=dataCategory: self.set_item(self.text, caller)
+                    "on_release": lambda x=f'{dataCategory}': self.setDropdownItem(self.ids.dataSet, dataCategory)
                     })
         self.menu= MDDropdownMenu(
             items=menu_items,
             width_mult=3
         )
+        self.menu.caller = caller
+        self.menu.open()
 
-    def validate(self, button, id):
-        pass
+
+    def showUnitMenu(self, caller):
+        if self.ids.dataSet.current_item not in controller.getDataSets():
+            return
+        if self.menu:
+            self.menu.dismiss()
+            self.menu = None
+        menu_items = []
+        for Unit in controller.getConfigSubUnits(self.ids.dataSet.current_item):
+            menu_items.append(
+                {
+                    "viewclass": "OneLineListItem",
+                    "text": Unit,
+                    "height": dp(40),
+                    "width": dp(150),
+                    "on_release": lambda x=f'{Unit}': self.setDropdownItem(self.ids.subUnit, self.text)
+                    })
+        self.menu= MDDropdownMenu(
+            items=menu_items,
+            width_mult=3
+        )
+        self.menu.caller = caller
+        self.menu.open()
 
 class DataTableDisplay(BoxLayout):
     pass
@@ -212,6 +239,63 @@ class OptionRow(OneLineIconListItem):
 
 class DatasetData(OneLineIconListItem):
     icon = StringProperty()
+    menu = None
+    dataGroupDialog = None
+
+    def addDataGroup(self):
+        global controller
+        
+        def closeDialog(button):
+            self.importDatasetDialog.dismiss()
+
+        def finishLoad(button):
+            pass
+
+        button = MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                    disabled=True,
+                )
+        self.importDatasetDialog = MDDialog(
+        title="Import data from dataset",
+        type="custom",
+        content_cls=ImportDatasetData(button=button),
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                button,
+            ],
+        )
+        self.importDatasetDialog.open()
+
+    def showMenu(self):
+
+        def closeMenu():
+            self.menu.dismiss()
+
+        if not self.menu:
+            menu_items = [{
+                "viewclass": "OptionRow",
+                "text": "Add DataGroup",
+                "icon": "plus-thick",
+                "height": dp(40),
+                "on_press": lambda : self.addDataGroup(),
+                "on_release": lambda : closeMenu()
+            },
+            ]
+            self.menu = MDDropdownMenu(
+                items=menu_items,
+                width_mult=3,
+            )    
+        self.menu.caller = self
+        self.menu.open()
 
 class FileRow(OneLineIconListItem):
     icon = StringProperty()
@@ -640,6 +724,7 @@ class FileList(Screen):
             add_file(files[file], file)
         self.list_datasets()
                 
+    
     def list_datasets(self):
         global controller
         
@@ -648,14 +733,13 @@ class FileList(Screen):
                 {
                     "viewclass": "DatasetData",
                     "text": data,
-                    "icon": "atom"
+                    "icon": "atom",
+                    "on_release": self.showDatasetMenu()
                 })
         self.ids.datasetList.data = []
         keys = controller.getDataSets().keys()
         for key in keys:
             add_file(key)
-
-
 
 class MainApp(MDApp):
     def __init__(self, **kwargs):
