@@ -999,8 +999,6 @@ class MainApp(MDApp):
             ],
         )
         self.confirmDialog.open()
-    
-        
 
 
 MainApp().run()
