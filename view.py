@@ -45,7 +45,10 @@ class ImportDatasetData(BoxLayout):
         columnData = self.ids.columnData.text
         startRowData = self.ids.startRowData.text
 
-        validateDatasets = dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroups(self.ids.dataSet.current_item)[self.ids.dataGroup.current_item]["unit"])
+        if dataGroup in controller.getDataGroups(dataSet):
+            print(controller.getDataGroup(dataSet, dataGroup))
+
+        validateDatasets = dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroup(dataSet, dataGroup)["unit"])
 
         lenRows = len(controller.getLoadedDataFrame(self.dataFrame))
         validNumbers = numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit() and int(numRows) > 0 and int(startRowData) + int(numRows) <= lenRows and int(startRowDates) + int(numRows) <= lenRows
@@ -455,7 +458,7 @@ class FileRow(OneLineIconListItem):
             self.dataDialog.dismiss()
 
         dataKey = self.text
-        dataFile = controller.getLoadedFile(dataKey)["file"]
+        dataFile = controller.getLoadedFile(dataKey)
         rowList = []
         for i, row in dataFile.iterrows():
             thisRow = [i + 1]
@@ -531,7 +534,32 @@ class FileRow(OneLineIconListItem):
             self.importDatasetDialog.dismiss()
 
         def finishLoad(button):
-            pass
+            title = self.importDatasetDialog.content_cls.ids.importName.text
+            dataSet = self.importDatasetDialog.content_cls.ids.dataSet.current_item
+            dataGroup = self.importDatasetDialog.content_cls.ids.dataGroup.current_item
+            subUnit = self.importDatasetDialog.content_cls.ids.subUnit.current_item
+            numRows = self.importDatasetDialog.content_cls.ids.numRows.text
+            invalidID = self.importDatasetDialog.content_cls.ids.invalidID.text
+            columnDates = self.importDatasetDialog.content_cls.ids.columnDates.text
+            startRowDates = self.importDatasetDialog.content_cls.ids.startRowDates.text
+            columnData = self.importDatasetDialog.content_cls.ids.columnData.text
+            startRowData = self.importDatasetDialog.content_cls.ids.startRowData.text
+
+            colData = usefulFunctions.column_string_to_int(columnData)
+            colDate = usefulFunctions.column_string_to_int(columnDates)
+
+            dataFrame = controller.getLoadedFile(self.text)
+
+            data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
+            dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colData)]]
+
+
+            retval = controller.dataToGroup(title, dataSet, dataGroup, subUnit, self.originalPath, data, dates)
+            if retval:
+                Snackbar(text="Data Successfully Imported!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            else:
+                Snackbar(text="Could not Import Data!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+
 
         button = MDFlatButton(
                     text="OK",
@@ -560,7 +588,6 @@ class FileRow(OneLineIconListItem):
     '''Close the menu created when clicking a loaded sheet'''
     def closeMenu(self):
         self.menu.dismiss()
-
 
 class FileList(Screen):
 

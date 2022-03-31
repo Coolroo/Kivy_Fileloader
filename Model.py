@@ -89,7 +89,7 @@ def saveDFs(path, dataFrames, chemicalData, config):
         newHDF.put(key, DataFrame(chemicalData[key]))
         newHDF.get_storer(key).attrs.isData=False
     
-    keys = config.keys()
+    #keys = config.keys()
     #items = [config[key] for key in keys]
     #newHDF.put("config", Series(data=items, index=keys, dtype="string"))
     newHDF.flush()
@@ -109,12 +109,12 @@ def HDFtoDict(path):
     keys = keyFile.keys()
     DataDict = {}
     chemicalDict = {}
-    config = {}
-    if "config" in keys:
-        del keys["config"]
-        localConfig = keyFile["config"]
-        for key in localConfig.keys():
-            config[key] = localConfig[key]
+    #config = {}
+    #if "config" in keys:
+        #del keys["config"]
+        #localConfig = keyFile["config"]
+        #for key in localConfig.keys():
+            #config[key] = localConfig[key]
     for key in keys:
         sheet = key[1:]
         if keyFile.get_storer(sheet).attrs.isData:
@@ -124,8 +124,9 @@ def HDFtoDict(path):
             DataDict[sheet]["fileName"] = keyFile.get_storer(sheet).attrs.fileName
         else:
             chemicalDict[sheet] = keyFile[sheet].to_dict()
+            print(chemicalDict[sheet])
     keyFile.close()
-    return [DataDict, chemicalDict, config]
+    return [DataDict, chemicalDict]
 
 
 def readConfig():

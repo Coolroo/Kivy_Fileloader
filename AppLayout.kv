@@ -4,11 +4,17 @@
 <ImportDatasetData>
     orientation: "vertical"
     size_hint_y: None
-    height: dp(400)
+    height: dp(450)
 
     MDBoxLayout:
         orientation: "vertical"
-        spacing: dp(5)
+        spacing: dp(10)
+
+        MDTextField:
+        pos_hint: {"center_x": 0.5}
+        hint_text: "Data Title"
+        id: importName
+        size_hint_x: 0.5
 
         MDBoxLayout:
             orientation: "horizontal"

@@ -84,7 +84,7 @@ class Controller:
         self.model.dataSets[dataSet][dataGroup]["unit"] = Unit
         return 1
     
-    def createDataSet(self, dataSet, dataGroup, fileName, measurements, dates):
+    def dataToGroup(self, title, dataSet, dataGroup, subUnit, fileName, measurements, dates):
         if dataSet not in self.model.dataSets:
             print("This dataSet does not exist")
             return 0
@@ -147,9 +147,16 @@ class Controller:
     def getDataGroups(self, dataSet):
         if dataSet not in self.model.dataSets:
             print("This dataset does not exist")
-            return 0
+            return None
         else:
             return self.model.dataSets[dataSet]
+    
+    def getDataGroup(self, dataSet, dataGroup):
+        if dataSet not in self.model.dataSets or dataGroup not in self.model.dataSets[dataSet]:
+            print("This datagroup/dataSet does not exist")
+            return 0
+        else:
+            return self.model.dataSets[dataSet][dataGroup]
     
     def getLoadedFiles(self):
         return self.model.loadedFiles
@@ -170,14 +177,14 @@ class Controller:
             newDataFrames = Model.HDFtoDict(filePath)
             self.model.loadedFiles = newDataFrames[0]
             self.model.dataSets = newDataFrames[1]
-            self.model.config = newDataFrames[2]
+            #self.model.config = newDataFrames[2]
             return 1
         except AttributeError:
             return 0
     
     def getLoadedFile(self, fileName):
         if fileName in self.model.loadedFiles:
-            return self.model.loadedFiles[fileName]
+            return self.model.loadedFiles[fileName]["file"]
         return None
     
     def getConfigUnits(self):
