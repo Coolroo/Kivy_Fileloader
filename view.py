@@ -31,7 +31,7 @@ Builder.load_file('AppLayout.kv')
 
 class ImportDatasetData(BoxLayout):
     button = ObjectProperty()
-    dataFrame = ObjectProperty()
+    dataFrame = StringProperty()
     menu = None
 
     def validate(self):
@@ -46,8 +46,15 @@ class ImportDatasetData(BoxLayout):
         startRowData = self.ids.startRowData.text
 
         validateDatasets = dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroups(self.ids.dataSet.current_item)[self.ids.dataGroup.current_item]["unit"])
-        validNumbers = numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit()
-        validColumns = columnDates in self.dataFrame.columns and columnData in self.dataFrame.columns
+
+        lenRows = len(controller.getLoadedDataFrame(self.dataFrame))
+        validNumbers = numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit() and int(numRows) > 0 and int(startRowData) + int(numRows) <= lenRows and int(startRowDates) + int(numRows) <= lenRows
+
+        numColumns = len(controller.getLoadedDataFrame(self.dataFrame).columns)
+        columns = [usefulFunctions.column_string(i+1) for i in range(numColumns)]
+        validColumns = columnDates in columns and columnData in columns 
+        #print(f'columnData = {columnData}, "columnNames = {str(controller.getLoadedDataFrame(self.dataFrame).columns)}')
+        print(f'validateDatasets = {validateDatasets}, validNumbers = {validNumbers}, validColumns = {validColumns}')
         self.button.disabled = validateDatasets or not validNumbers or not validColumns
 
 
@@ -80,10 +87,12 @@ class ImportDatasetData(BoxLayout):
 
     def showDataGroupMenu(self, caller):
         global controller
+        if self.ids.dataSet.current_item not in controller.getDataSets():
+            return
         if self.menu:
             self.menu.dismiss()
         menu_items = []
-        for dataCategory in controller.getDataSets():
+        for dataCategory in controller.getDataGroups(self.ids.dataSet.current_item):
             menu_items.append(
                 {
                     "viewclass": "OneLineListItem",
@@ -220,11 +229,7 @@ class DatasetAddDialog(BoxLayout):
 
     def validate(self):
         global controller
-        self.button.disabled = (self.ids.measurementUnit.current_item == "" or 
-                                self.ids.measurementUnit.current_item not in controller.getConfigUnits() or
-                                self.ids.measurementStandard.current_item  == "" or
-                                self.ids.measurementStandard.current_item not in controller.getConfigSubUnits(self.ids.measurementUnit.current_item) or
-                                self.ids.datasetName.text == "" or 
+        self.button.disabled = (self.ids.datasetName.text == "" or 
                                 self.ids.datasetName.text in controller.getDataSets() or 
                                 not usefulFunctions.isIdentifier(self.ids.datasetName.text))
                                 
@@ -538,7 +543,7 @@ class FileRow(OneLineIconListItem):
         self.importDatasetDialog = MDDialog(
         title="Import data from dataset",
         type="custom",
-        content_cls=ImportDatasetData(button=button, dataSet=controller.getLoadedFiles()[self.text]),
+        content_cls=ImportDatasetData(button=button, dataFrame=self.text),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -684,10 +689,8 @@ class FileList(Screen):
 
         def finishLoad(button):
             datasetName = self.datasetDialog.content_cls.ids.datasetName
-            measurementUnit = self.datasetDialog.content_cls.ids.measurementUnit
-            measurementStandard = self.datasetDialog.content_cls.ids.measurementStandard
 
-            retval = controller.addDataSet(datasetName.text, measurementUnit.text, measurementStandard.text)
+            retval = controller.addDataSet(datasetName.text)
             if retval == 0:
                 Snackbar(text=f'Could not add dataset', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             else:

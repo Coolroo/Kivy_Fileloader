@@ -4,7 +4,7 @@
 <ImportDatasetData>
     orientation: "vertical"
     size_hint_y: None
-    height: dp(300)
+    height: dp(400)
 
     MDBoxLayout:
         orientation: "vertical"
@@ -12,18 +12,40 @@
 
         MDBoxLayout:
             orientation: "horizontal"
+            pos_hint: {"center_x": 0.5}
 
-            MDDropDownItem:
-                pos_hint: {"center_x": 0.5}
-                id: dataSet
-                text: "Please select the DataSet"
-                on_release: root.showDataSetMenu(self)
+            MDBoxLayout:
+                orientation: "vertical"
 
-            MDDropDownItem:
-                pos_hint: {"center_x": 0.5}
-                id: dataGroup
-                text: "Please select the DataGroup"
-                on_release: root.showDataGroupMenu(self)
+                MDLabel:
+                    text: "Dataset"
+                    halign: "center"
+                    pos_hint: {"center_x": 0.5}
+
+                MDDropDownItem:
+                    pos_hint: {"center_x": 0.5}
+                    id: dataSet
+                    text: "Please select the DataSet"
+                    on_release: root.showDataSetMenu(self)
+
+            MDBoxLayout:
+                orientation: "vertical"
+
+                MDLabel:
+                    text: "DataGroup"
+                    halign: "center"
+                    pos_hint: {"center_x": 0.5}
+
+                MDDropDownItem:
+                    pos_hint: {"center_x": 0.5}
+                    id: dataGroup
+                    text: "Please select the DataGroup"
+                    on_release: root.showDataGroupMenu(self)
+
+        MDLabel:
+            text: "Unit"
+            halign: "center"
+            pos_hint: {"center_x": 0.5}
 
         MDDropDownItem:
             pos_hint: {"center_x": 0.5}
@@ -190,7 +212,7 @@
 <DatasetAddDialog>
     orientation: 'vertical'
     size_hint_y: None
-    height: dp(180)
+    height: dp(100)
     
     MDBoxLayout:
         spacing: dp(5)
@@ -200,20 +222,6 @@
             id: datasetName
             hint_text: "Name of the dataset"
             on_text: root.validate()
-            
-        MDDropDownItem:
-            id: measurementUnit
-            size_hint_y: None
-            height: dp(120)
-            text: "Measurement Unit"
-            on_release: root.buttonPress(self, "measurementUnit")
-
-        MDDropDownItem:
-            id: measurementStandard
-            size_hint_y: None
-            height: dp(120)
-            text: "Measurement Standard"
-            on_release: root.buttonPress(self, "measurementStandard")
                 
     
     

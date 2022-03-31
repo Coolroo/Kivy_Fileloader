@@ -64,7 +64,7 @@ class Controller:
         pass
             
     
-    def addDataSet(self, dataSet, Unit, Standard):
+    def addDataSet(self, dataSet):
         if dataSet in self.model.dataSets or dataSet in self.model.loadedFiles:
             print("A dataset species with this name already exists")
             return 0
@@ -137,6 +137,12 @@ class Controller:
     
     def getDataSets(self):
         return self.model.dataSets
+
+    def getLoadedDataFrame(self, name):
+        if name not in self.model.loadedFiles:
+            print("Not a valid dataframe")
+            return None
+        return self.model.loadedFiles[name]["file"]
 
     def getDataGroups(self, dataSet):
         if dataSet not in self.model.dataSets:
