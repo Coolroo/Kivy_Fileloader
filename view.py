@@ -173,7 +173,6 @@ class AddDataGroup(BoxLayout):
         self.menu.caller = caller
         self.menu.open()
     
-class newItem(OneLineListItem):
     pass
 
 class DataTableDisplay(BoxLayout):
@@ -937,14 +936,14 @@ class MainApp(MDApp):
             "on_press": lambda : self.screen.loadProject(),
             "on_release": lambda : self.closeMenu()
         },
-        {
+        '''{
             "viewclass": "OptionRow",
             "text": "Preferences",
             "icon": "cog",
             "height": dp(40),
             "on_press": lambda : self.screen.showPreferencesDialog(),
             "on_release": lambda : self.closeMenu()
-        },
+        },'''
         ]
         self.menu= MDDropdownMenu(
             items=menu_items,
