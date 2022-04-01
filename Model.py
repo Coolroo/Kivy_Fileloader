@@ -8,18 +8,19 @@ class Model:
             self.loadedFiles = {}
             self.dataSets = {}
             self.config = self.defaultConfig()
-            self.autoSaveInterval = 5
-            self.maxAutoSaves = 5
+            self.autoSaveInterval = 300
+            self.maxAutoSaves = 10
             
     def defaultConfig(self):
         config = {}
         config["Mass"] = {}
         mass = config["Mass"]
+        mass["kg"] = 1000
         mass["g"] = 1
         mass["mg"] = 1/1000.0
         mass["ug"] = 1/1000000.0
         mass["ng"] = 1/1000000000.0
-        mass["kg"] = 1000
+
         
         config["Volume"] = {}
         volume = config["Volume"]
@@ -35,6 +36,7 @@ class Model:
         parts = config["Parts"]
         parts["ppm"] = 1
         parts["ppb"] = 1/1000.0
+        parts["ppt"] = parts["ppb"]/1000
         
         
         

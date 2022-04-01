@@ -29,6 +29,15 @@ import tabloo
 controller = Controller()
 Builder.load_file('AppLayout.kv') 
 
+class SelectDataGroup(OneLineAvatarIconListItem):
+    divider = None
+
+    def set_icon(self, instance):
+        instance.active = not instance.active
+
+class DataGroupList(BoxLayout):
+    pass
+
 class ImportDatasetData(BoxLayout):
     button = ObjectProperty()
     dataFrame = StringProperty()
@@ -305,6 +314,49 @@ class DatasetData(OneLineIconListItem):
     menu = None
     dataGroupDialog = None
     dataGroupListDialog = None
+    dataGroupExportDialog = None
+
+    def exportDataGroups(self):
+        global controller
+
+        menu = None
+        
+        def closeDialog(button):
+            self.dataGroupExportDialog.dismiss()
+        
+        def finishLoad(button):
+            selectedDataGroups = []
+
+            for item in self.dataGroupExportDialog.items:
+                if item.ids.check.active:
+                    selectedDataGroups.append(item.text)
+            if(len(selectedDataGroups) > 0):
+                file = filechooser.save_file(filters = [["Excel Spreadsheet", "*.xlsx"]])
+                if file:
+                    controller.exportDataGroups(file[0], self.text, selectedDataGroups)
+            closeDialog(None)
+
+        self.dataGroupExportDialog = MDDialog(
+        title=f'Please select DataGroups to export from ({self.text})',
+        type="confirmation",
+        items = [SelectDataGroup(text=dataGroup) for dataGroup in controller.getDataGroups(self.text)],
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                )
+            ],
+        )
+        self.dataGroupExportDialog.open()
 
     def addDataGroup(self):
         global controller
@@ -350,17 +402,19 @@ class DatasetData(OneLineIconListItem):
 
     def listDataGroups(self):
         global controller
+
+        menu = None
         
         def closeDialog(button):
             self.dataGroupListDialog.dismiss()
 
+
         dataSet = self.text
-        newItems = [OneLineListItem(text=data) for data in controller.getDataGroups(dataSet).keys()]
         self.dataGroupListDialog = MDDialog(
         title=f'All DataGroups for the dataset ({self.text})',
         type="custom",
+        content_cls=DataGroupList(),
         auto_dismiss=False,
-        items = newItems,
         buttons=[
                 MDFlatButton(
                     text="CANCEL",
@@ -370,6 +424,9 @@ class DatasetData(OneLineIconListItem):
                 ),
             ],
         )
+        self.dataGroupListDialog.content_cls.ids.dataGroups.data = []
+        for data in controller.getDataGroups(dataSet).keys():
+            self.dataGroupListDialog.content_cls.ids.dataGroups.data.append({"viewclass":"OneLineListItem", "text":data, "on_release":lambda : None})
         self.dataGroupListDialog.open()
 
     def showMenu(self):
@@ -383,6 +440,7 @@ class DatasetData(OneLineIconListItem):
                 "text": "Add DataGroup",
                 "icon": "plus-thick",
                 "height": dp(40),
+                "width": dp(100),
                 "on_press": lambda : self.addDataGroup(),
                 "on_release": lambda : closeMenu()
             },
@@ -391,7 +449,17 @@ class DatasetData(OneLineIconListItem):
                 "text": "List Datagroups",
                 "icon": "format-list-bulleted",
                 "height": dp(40),
+                "width": dp(100),
                 "on_press": lambda : self.listDataGroups(),
+                "on_release": lambda : closeMenu()
+            },
+            {
+                "viewclass": "OptionRow",
+                "text": "List Datagroups",
+                "icon": "file-export",
+                "height": dp(40),
+                "width": dp(100),
+                "on_press": lambda : self.exportDataGroups(),
                 "on_release": lambda : closeMenu()
             }
             ]
@@ -936,14 +1004,6 @@ class MainApp(MDApp):
             "on_press": lambda : self.screen.loadProject(),
             "on_release": lambda : self.closeMenu()
         },
-        '''{
-            "viewclass": "OptionRow",
-            "text": "Preferences",
-            "icon": "cog",
-            "height": dp(40),
-            "on_press": lambda : self.screen.showPreferencesDialog(),
-            "on_release": lambda : self.closeMenu()
-        },'''
         ]
         self.menu= MDDropdownMenu(
             items=menu_items,

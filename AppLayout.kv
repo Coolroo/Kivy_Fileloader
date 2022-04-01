@@ -1,6 +1,29 @@
 #:import images_path kivymd.images_path
 <TooltipIconLeftWidget@IconLeftWidget+MDTooltip>
 
+<SelectDataGroup>
+    on_release: root.set_icon(check)
+
+    CheckboxLeftWidget:
+        id: check
+
+<DataGroupList>
+    size_hint_y: None
+    height: dp(250)
+
+    RecycleView:
+        id: dataGroups
+        key_viewclass: 'viewclass'
+        key_size: 'height'
+
+        RecycleBoxLayout:
+            padding: dp(10)
+            default_size: None, dp(48)
+            default_size_hint: 1, None
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: 'vertical'
+
 <ImportDatasetData>
     orientation: "vertical"
     size_hint_y: None
@@ -11,10 +34,10 @@
         spacing: dp(10)
 
         MDTextField:
-        pos_hint: {"center_x": 0.5}
-        hint_text: "Data Title"
-        id: importName
-        size_hint_x: 0.5
+            pos_hint: {"center_x": 0.5}
+            hint_text: "Data Title"
+            id: importName
+            size_hint_x: 0.5
 
         MDBoxLayout:
             orientation: "horizontal"

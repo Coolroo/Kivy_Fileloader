@@ -63,7 +63,6 @@ class Controller:
     def loadAutosave(self):
         pass
             
-    
     def addDataSet(self, dataSet):
         if dataSet in self.model.dataSets or dataSet in self.model.loadedFiles:
             print("A dataset species with this name already exists")
@@ -71,18 +70,6 @@ class Controller:
         else:
             self.model.dataSets[dataSet] = {}
             return 1
-    
-    def addDataGroup(self, dataSet, dataGroup, Unit):
-        if dataSet not in self.model.dataSets:
-            print("This dataSet does not exist")
-            return 0
-        if dataGroup in self.model.dataSets[dataSet]:
-            print("This dataGroup already exists")
-            return 0
-        self.model.dataSets[dataSet][dataGroup] = {}
-        self.model.dataSets[dataSet][dataGroup]["data"] = []
-        self.model.dataSets[dataSet][dataGroup]["unit"] = Unit
-        return 1
     
     def dataToGroup(self, title, dataSet, dataGroup, subUnit, fileName, measurements, dates):
         if dataSet not in self.model.dataSets:
@@ -93,7 +80,7 @@ class Controller:
                 print("This datagroup does not exist for the dataset " + dataSet)
                 return 0
             dataGroup = self.model.dataSets[dataSet][dataGroup]
-            dataGroup.append({"source": fileName, "measurements": measurements, "dates": dates})
+            dataGroup["data"].append({"source": fileName, "measurements": measurements, "dates": dates})
             return 1
     
     def loadFile(self, filePath, fileName):
@@ -143,20 +130,6 @@ class Controller:
             print("Not a valid dataframe")
             return None
         return self.model.loadedFiles[name]["file"]
-
-    def getDataGroups(self, dataSet):
-        if dataSet not in self.model.dataSets:
-            print("This dataset does not exist")
-            return None
-        else:
-            return self.model.dataSets[dataSet]
-    
-    def getDataGroup(self, dataSet, dataGroup):
-        if dataSet not in self.model.dataSets or dataGroup not in self.model.dataSets[dataSet]:
-            print("This datagroup/dataSet does not exist")
-            return 0
-        else:
-            return self.model.dataSets[dataSet][dataGroup]
     
     def getLoadedFiles(self):
         return self.model.loadedFiles
@@ -170,7 +143,6 @@ class Controller:
         except IOError:
             return 0
         
-
     def loadProject(self, filePath):
         print(f'Trying to get HDF file at path {filePath}')
         try:
@@ -202,6 +174,47 @@ class Controller:
             return 1
         else:
             return 0
+
+    def getDataGroup(self, dataSet, dataGroup):
+        if dataSet not in self.model.dataSets or dataGroup not in self.model.dataSets[dataSet]:
+            print("This datagroup/dataSet does not exist")
+            return 0
+        else:
+            return self.model.dataSets[dataSet][dataGroup]
+
+    def addDataGroup(self, dataSet, dataGroup, Unit):
+        if dataSet not in self.model.dataSets:
+            print("This dataSet does not exist")
+            return 0
+        if dataGroup in self.model.dataSets[dataSet]:
+            print("This dataGroup already exists")
+            return 0
+        self.model.dataSets[dataSet][dataGroup] = {}
+        self.model.dataSets[dataSet][dataGroup]["data"] = []
+        self.model.dataSets[dataSet][dataGroup]["unit"] = Unit
+        return 1
+
+    def getDataGroups(self, dataSet):
+        if dataSet not in self.model.dataSets:
+            print("This dataset does not exist")
+            return None
+        else:
+            return self.model.dataSets[dataSet]
+
+    def exportDataGroups(self, filePath, dataSet, dataGroups):
+        if dataSet not in self.model.dataSets:
+            print("This is not a valid DataSet")
+            return 0
+        realDataGroups = self.getDataGroups(dataSet)
+        dataGroupData = {}
+        for dataGroup in dataGroups:
+            if dataGroup not in realDataGroups:
+                print(f'{dataGroup} is not a datagroup in {dataSet}')
+                return 0
+            else:
+                dataGroupData.append({"name":dataGroup, "dataGroup": self.getDataGroup(dataSet, dataGroup)})
+        print(dataGroupData)
+        
     
     
 def getFileType(filePath):
