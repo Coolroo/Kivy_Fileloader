@@ -180,7 +180,7 @@ class Controller:
         print("This dataGroup is not in this dataSet")
         return 0
 
-    def dataToGroup(self, title, dataSet, dataGroup, subUnit, fileName, measurements, dates):
+    def dataToGroup(self, dataSet, dataGroup, subUnit, fileName, measurements, dates):
         print(f'dates = {dates}, measurements= {measurements}')
         if dataSet not in self.model.dataSets:
             print("This dataSet does not exist")
@@ -228,20 +228,23 @@ class Controller:
         dates = []
         columns = ["Dates (YYYY-MM-DD)"]
         rows = []
-        for i, dG in enumerate(dataGroupData):
-            realDG = dG["dataGroup"]["data"][i]
-            dates += realDG["measurements"].keys()
-            columns.append(f'{dG["name"]} ({realDG["unit"]})')
+        for dG in dataGroupData:  
+            for i in range(len(dG["dataGroup"]["data"])):
+                realDG = dG["dataGroup"]["data"][i]
+                dates += realDG["measurements"].keys()
+                columns.append(f'{dG["name"]} ({dG["dataGroup"]["unit"]})')
         dates = list(set(dates))
+        dates.sort(key = lambda date: datetime.strptime(date, '%Y-%m-%d'))
         for date in dates:
             newRow = []
             newRow.append(date)
-            for i, dG in dataGroupData:
-                realDG = dG["dataGroup"]["data"][i]
-                if date in realDG["measurements"]:
-                    newRow.append(realDG["measurements"][date])
-                else:
-                    newRow.append("N/A")
+            for dG in dataGroupData:
+                for i in range(len(dG["dataGroup"]["data"])):
+                    realDG = dG["dataGroup"]["data"][i]
+                    if date in realDG["measurements"]:
+                        newRow.append(f'{realDG["measurements"][date]} {realDG["unit"]}')
+                    else:
+                        newRow.append("N/A")
             rows.append(newRow)
         finalFile = DataFrame(rows, columns=columns)
         finalFile.to_excel(filePath, sheet_name=dataSet)
