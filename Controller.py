@@ -262,10 +262,10 @@ class Controller:
         """
         if fileName in self.model.loadedFiles:
             if files:
-                print("Here I am")
+                #print("Here I am")
                 return self.model.loadedFiles[fileName]["file"]
             else:
-                print("There I go")
+                #print("There I go")
                 return self.model.loadedFiles[fileName]
         return None
     
