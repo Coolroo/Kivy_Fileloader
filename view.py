@@ -1173,7 +1173,7 @@ class FileList(Screen):
         for key in keys:
             add_file(key)
 
-class MainApp(MDApp):
+class MVCApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.screen = FileList()
@@ -1300,4 +1300,4 @@ class MainApp(MDApp):
         self.confirmDialog.open()
 
 
-MainApp().run()
+MVCApp().run()
