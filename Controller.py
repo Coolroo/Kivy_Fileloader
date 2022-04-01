@@ -232,7 +232,7 @@ class Controller:
             for i in range(len(dG["dataGroup"]["data"])):
                 realDG = dG["dataGroup"]["data"][i]
                 dates += realDG["measurements"].keys()
-                columns.append(f'{dG["name"]} ({dG["dataGroup"]["unit"]})')
+                columns.append(f'[{dG["name"]}] {realDG["source"]} ({dG["dataGroup"]["unit"]})')
         dates = list(set(dates))
         dates.sort(key = lambda date: datetime.strptime(date, '%Y-%m-%d'))
         for date in dates:

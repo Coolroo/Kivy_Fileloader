@@ -35,26 +35,21 @@ class BulkImport(BoxLayout):
     menu = None
 
     def validate(self):
+        title = self.ids.title.text
         dataGroup = self.ids.dataGroup.current_item
         subUnit = self.ids.subUnit.current_item
         numRows = self.ids.numRows.text
-        invalidID = self.ids.invalidID.text
-        columnDates = self.ids.columnDates.text
         startRowDates = self.ids.startRowDates.text
-        columnData = self.ids.columnData.text
         startRowData = self.ids.startRowData.text
 
         #if dataGroup in controller.getDataGroups(dataSet):
             #print(controller.getDataGroup(dataSet, dataGroup))
 
-        validateDatasets = self.dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(self.dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroup(self.dataSet, dataGroup)["unit"])
+        validateDatasets = dataGroup not in controller.getDataGroups(self.dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroup(self.dataSet, dataGroup)["unit"])
 
         validNumbers = numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit() and int(numRows) > 0
 
-        numColumns = len(controller.getLoadedDataFrame(self.dataFrame).columns)
-        columns = [usefulFunctions.column_string(i+1) for i in range(numColumns)]
-        validColumns = columnDates in columns and columnData in columns 
-        self.button.disabled = validateDatasets or not validNumbers or not validColumns
+        self.button.disabled = title == "" or validateDatasets or not validNumbers
 
     def setDropdownItem(self, dropdown, text):
         dropdown.set_item(text)
@@ -84,7 +79,6 @@ class BulkImport(BoxLayout):
         )
         self.menu.caller = caller
         self.menu.open()
-
 
     def showUnitMenu(self, caller):
         if self.ids.dataGroup.current_item not in controller.getDataGroups(self.dataSet):
@@ -124,11 +118,11 @@ class ImportDatasetData(BoxLayout):
     menu = None
 
     def validate(self):
+        title = self.ids.title.text
         dataSet = self.ids.dataSet.current_item
         dataGroup = self.ids.dataGroup.current_item
         subUnit = self.ids.subUnit.current_item
         numRows = self.ids.numRows.text
-        invalidID = self.ids.invalidID.text
         columnDates = self.ids.columnDates.text
         startRowDates = self.ids.startRowDates.text
         columnData = self.ids.columnData.text
@@ -144,7 +138,7 @@ class ImportDatasetData(BoxLayout):
 
         numColumns = len(controller.getLoadedDataFrame(self.dataFrame).columns)
         columns = [usefulFunctions.column_string(i+1) for i in range(numColumns)]
-        validColumns = columnDates in columns and columnData in columns 
+        validColumns = title == "" or columnDates in columns and columnData in columns 
         #print(f'columnData = {columnData}, "columnNames = {str(controller.getLoadedDataFrame(self.dataFrame).columns)}')
         #print(f'validateDatasets = {validateDatasets}, validNumbers = {validNumbers}, validColumns = {validColumns}')
         self.button.disabled = validateDatasets or not validNumbers or not validColumns
@@ -397,6 +391,46 @@ class DatasetData(OneLineIconListItem):
     dataGroupExportDialog = None
     deleteDataGroupsDialog = None
     bulkImportDialog = None
+    bulkFilesDialog = None
+
+    def getBulkFiles(self):
+        global controller
+        
+        def closeDialog(button):
+            self.bulkFilesDialog.dismiss()
+        
+        def finishLoad(button):
+            selectedFiles = []
+
+            for item in self.bulkFilesDialog.items:
+                if item.ids.check.active:
+                    selectedFiles.append(item.text)
+            if(len(selectedFiles) > 0):
+                print(selectedFiles)
+                self.bulkImport(selectedFiles)
+            closeDialog(None)
+
+        self.bulkFilesDialog = MDDialog(
+        title=f'Please select Loaded Files to import from',
+        type="confirmation",
+        items = [SelectDataGroup(text=file) for file in controller.getLoadedFiles().keys()],
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                )
+            ],
+        )
+        self.bulkFilesDialog.open()
 
     def bulkImport(self, loadedFiles):
         global controller
@@ -406,11 +440,10 @@ class DatasetData(OneLineIconListItem):
 
         def finishLoad(button):
             #title = self.bulkImportDialog.content_cls.ids.importName.text
-            
+            title = self.bulkImportDialog.content_cls.ids.title.text
             dataGroup = self.bulkImportDialog.content_cls.ids.dataGroup.current_item
             subUnit = self.bulkImportDialog.content_cls.ids.subUnit.current_item
             numRows = self.bulkImportDialog.content_cls.ids.numRows.text
-            invalidID = self.bulkImportDialog.content_cls.ids.invalidID.text
             columnDates = self.bulkImportDialog.content_cls.ids.columnDates.text
             startRowDates = self.bulkImportDialog.content_cls.ids.startRowDates.text
             columnData = self.bulkImportDialog.content_cls.ids.columnData.text
@@ -420,20 +453,15 @@ class DatasetData(OneLineIconListItem):
             colDate = usefulFunctions.column_string_to_int(columnDates)
             retval = 0
             for file in loadedFiles:
-                try:
-                    dataFrame = controller.getLoadedFile(self.text)
+                #try:
+                dataFrame = controller.getLoadedFile(file)
 
-                    data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
-                    dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
+                data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
+                dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
 
-                    for index, row in data.iterrows():
-                        print(row)
-                        if row.iloc[0] == invalidID:
-                            dates.drop(index)
-                            data.drop(index)
-                    retval += controller.dataToGroup(self.text, dataGroup, subUnit, controller.getLoadedFile(file)["fileName"], [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
-                except:
-                    pass
+                retval += controller.dataToGroup(self.text, dataGroup, subUnit, f'{file} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
+                #except:
+                    #print("Exception")
             if retval:
                 Snackbar(text=f'Successfully imported {retval}/{len(loadedFiles)} Selections', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             else:
@@ -451,7 +479,7 @@ class DatasetData(OneLineIconListItem):
         self.bulkImportDialog = MDDialog(
         title="Import data from dataset",
         type="custom",
-        content_cls=ImportDatasetData(button=button, dataFrame=self.text),
+        content_cls=BulkImport(button=button, dataSet=self.text),
         auto_dismiss=False,
         buttons=[
                 MDFlatButton(
@@ -662,7 +690,7 @@ class DatasetData(OneLineIconListItem):
                 "text": "Bulk Import",
                 "icon": "database-import",
                 "height": dp(40),
-                "on_press": lambda : self.bulkImport(),
+                "on_press": lambda : self.getBulkFiles(),
                 "on_release": lambda : closeMenu()
             },
             ]
@@ -804,11 +832,11 @@ class FileRow(OneLineIconListItem):
             self.importDatasetDialog.dismiss()
 
         def finishLoad(button):
+            title = self.importDatasetDialog.content_cls.ids.dataGroup.text
             dataSet = self.importDatasetDialog.content_cls.ids.dataSet.current_item
             dataGroup = self.importDatasetDialog.content_cls.ids.dataGroup.current_item
             subUnit = self.importDatasetDialog.content_cls.ids.subUnit.current_item
             numRows = self.importDatasetDialog.content_cls.ids.numRows.text
-            invalidID = self.importDatasetDialog.content_cls.ids.invalidID.text
             columnDates = self.importDatasetDialog.content_cls.ids.columnDates.text
             startRowDates = self.importDatasetDialog.content_cls.ids.startRowDates.text
             columnData = self.importDatasetDialog.content_cls.ids.columnData.text
@@ -824,10 +852,7 @@ class FileRow(OneLineIconListItem):
 
             for index, row in data.iterrows():
                 print(row)
-                if row.iloc[0] == invalidID:
-                    dates.drop(index)
-                    data.drop(index)
-            retval = controller.dataToGroup(dataSet, dataGroup, subUnit, self.originalPath, [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
+            retval = controller.dataToGroup(dataSet, dataGroup, subUnit, f'{self.originalPath} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
             if retval:
                 Snackbar(text="Data Successfully Imported!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             else:

@@ -5,9 +5,31 @@
     orientation: "vertical"
     size_hint_y: None
     height: dp(450)
+
+    MDTextField:
+        pos_hint: {"center_x": 0.5}
+        size_hint_x: 0.3
+        id: title
+        hint_text: "Title for Data"
+        on_text: root.validate()
+
     MDBoxLayout:
         orientation: "horizontal"
         pos_hint: {"center_x": 0.5}
+
+        MDBoxLayout:
+            orientation: "vertical"
+
+            MDLabel:
+                text: "DataGroup"
+                halign: "center"
+                pos_hint: {"center_x": 0.5}
+
+            MDDropDownItem:
+                pos_hint: {"center_x": 0.5}
+                id: dataGroup
+                text: "Please select the DataGroup"
+                on_release: root.showDataGroupMenu(self)
 
         MDBoxLayout:
             orientation: "vertical"
@@ -23,19 +45,6 @@
                 text: "Please select the data's unit"
                 on_release: root.showUnitMenu(self)
         
-        MDBoxLayout:
-            orientation: "vertical"
-
-            MDLabel:
-                text: "DataGroup"
-                halign: "center"
-                pos_hint: {"center_x": 0.5}
-
-            MDDropDownItem:
-                pos_hint: {"center_x": 0.5}
-                id: dataGroup
-                text: "Please select the DataGroup"
-                on_release: root.showDataGroupMenu(self)
         
 
     MDTextField:
@@ -43,13 +52,6 @@
         size_hint_x: 0.3
         id: numRows
         hint_text: "Number of data points"
-        on_text: root.validate()
-
-    MDTextField:
-        pos_hint: {"center_x": 0.5}
-        size_hint_x: 0.3
-        id: invalidID
-        hint_text: "Invalid value"
         on_text: root.validate()
 
 
@@ -119,6 +121,13 @@
         orientation: "vertical"
         spacing: dp(10)
 
+        MDTextField:
+            pos_hint: {"center_x": 0.5}
+            size_hint_x: 0.3
+            id: title
+            hint_text: "Title for Data"
+            on_text: root.validate()
+
         MDBoxLayout:
             orientation: "horizontal"
             pos_hint: {"center_x": 0.5}
@@ -167,13 +176,6 @@
             size_hint_x: 0.3
             id: numRows
             hint_text: "Number of data points"
-            on_text: root.validate()
-
-        MDTextField:
-            pos_hint: {"center_x": 0.5}
-            size_hint_x: 0.3
-            id: invalidID
-            hint_text: "Invalid value"
             on_text: root.validate()
 
     
