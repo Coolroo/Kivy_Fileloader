@@ -142,9 +142,12 @@ class Controller:
         except AttributeError:
             return 0
     
-    def getLoadedFile(self, fileName):
+    def getLoadedFile(self, fileName, files=True):
         if fileName in self.model.loadedFiles:
-            return self.model.loadedFiles[fileName]["file"]
+            if files:
+                return self.model.loadedFiles[fileName]["file"]
+            else:
+                return self.model.loadedFiles[fileName]
         return None
     
     def getConfigUnits(self):
@@ -234,7 +237,16 @@ class Controller:
                 dates += realDG["measurements"].keys()
                 columns.append(f'[{dG["name"]}] {realDG["source"]} ({dG["dataGroup"]["unit"]})')
         dates = list(set(dates))
-        dates.sort(key = lambda date: datetime.strptime(date, '%Y-%m-%d'))
+        try:
+            dates.sort(key = lambda date: datetime.strptime(date, '%Y-%m-%d'))
+        except:
+            try:
+                dates.sort(key = lambda date: datetime.strptime(date, '%Y%m%d'))
+            except:
+                try:
+                    dates.sort(key = lambda date: datetime.strptime(date, '%-m%-d%y'))
+                except:
+                    pass
         for date in dates:
             newRow = []
             newRow.append(date)
@@ -257,7 +269,7 @@ class Controller:
     
 def getFileType(filePath):
     file_name = os.path.basename(filePath)
-    file_extension = os.path.splitext(file_name)[1][1:]
+    file_extension = os.path.splitext(file_name)[1][1:].lower()
     if file_extension == "csv":
         return "csv"
     elif file_extension.find("xls") >= 0:

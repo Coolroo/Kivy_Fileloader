@@ -453,15 +453,16 @@ class DatasetData(OneLineIconListItem):
             colDate = usefulFunctions.column_string_to_int(columnDates)
             retval = 0
             for file in loadedFiles:
-                #try:
-                dataFrame = controller.getLoadedFile(file)
+                try:
+                    realFile = controller.getLoadedFile(file, False)
+                    dataFrame = realFile["file"]
+                    
+                    data = dataFrame.iloc[range(int(startRowData), int(startRowData)+int(numRows) + 1), [int(colData)]]
+                    dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows) + 1), [int(colDate)]]
 
-                data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
-                dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
-
-                retval += controller.dataToGroup(self.text, dataGroup, subUnit, f'{file} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
-                #except:
-                    #print("Exception")
+                    retval += controller.dataToGroup(self.text, dataGroup, subUnit, f'{realFile["fileName"]} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
+                except:
+                    pass
             if retval:
                 Snackbar(text=f'Successfully imported {retval}/{len(loadedFiles)} Selections', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             else:
@@ -515,7 +516,7 @@ class DatasetData(OneLineIconListItem):
             closeDialog(None)
 
         self.deleteDataGroupsDialog = MDDialog(
-        title=f'Please select DataGroups to export from ({self.text})',
+        title=f'Please select DataGroups to delete from ({self.text})',
         type="confirmation",
         items = [SelectDataGroup(text=dataGroup) for dataGroup in controller.getDataGroups(self.text)],
         auto_dismiss=False,
@@ -549,9 +550,12 @@ class DatasetData(OneLineIconListItem):
                 if item.ids.check.active:
                     selectedDataGroups.append(item.text)
             if(len(selectedDataGroups) > 0):
-                file = filechooser.save_file(filters = [["Excel Spreadsheet", "*.xlsx"]])
+                file = filechooser.save_file(filters = [["Excel Spreadsheet", "*.xlsx", "*.XLSX"]])
                 if file:
-                    controller.exportDataGroups(file[0], self.text, selectedDataGroups)
+                    if controller.exportDataGroups(file[0], self.text, selectedDataGroups):
+                        Snackbar(text=f'Successfully Exported DataGroups!', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+                    else:
+                        Snackbar(text=f'Could not Export DataGroups!', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             closeDialog(None)
 
         self.dataGroupExportDialog = MDDialog(
@@ -841,21 +845,24 @@ class FileRow(OneLineIconListItem):
             startRowDates = self.importDatasetDialog.content_cls.ids.startRowDates.text
             columnData = self.importDatasetDialog.content_cls.ids.columnData.text
             startRowData = self.importDatasetDialog.content_cls.ids.startRowData.text
+            try:
+                colData = usefulFunctions.column_string_to_int(columnData)
+                colDate = usefulFunctions.column_string_to_int(columnDates)
 
-            colData = usefulFunctions.column_string_to_int(columnData)
-            colDate = usefulFunctions.column_string_to_int(columnDates)
+                realFile = controller.getLoadedFile(self.text)
+                dataFrame = realFile["file"]
 
-            dataFrame = controller.getLoadedFile(self.text)
+                data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
+                dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
 
-            data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
-            dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
-
-            for index, row in data.iterrows():
-                print(row)
-            retval = controller.dataToGroup(dataSet, dataGroup, subUnit, f'{self.originalPath} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
-            if retval:
-                Snackbar(text="Data Successfully Imported!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
-            else:
+                for index, row in data.iterrows():
+                    print(row)
+                retval = controller.dataToGroup(dataSet, dataGroup, subUnit, f'{realFile["filePath"]} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
+                if retval:
+                    Snackbar(text="Data Successfully Imported!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+                else:
+                    Snackbar(text="Could not Import Data!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            except:
                 Snackbar(text="Could not Import Data!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             closeDialog(None)
 
@@ -907,7 +914,7 @@ class FileList(Screen):
         :return: the dataframe of the file that was loaded.
         :doc-author: Trelent
         """
-        file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx"]])
+        file = filechooser.open_file(filters = [["Data Files (csv, xls, xlsx)", "*.xls", "*.csv", "*.xlsx", "*.XLS", "*.CSV", "*.XLSX"]])
         if file:
             #self.showImportDialog()
             filetype = getFileType(file[0])
@@ -929,7 +936,7 @@ class FileList(Screen):
         :doc-author: Trelent
         """
         global controller
-        file = filechooser.save_file(filters = [["HDF File", "*.hdf"]])
+        file = filechooser.save_file(filters = [["HDF File", "*.hdf", "*.HDF"]])
         if file:
             returnVal = controller.save(file[0])
             if returnVal:
@@ -950,7 +957,7 @@ class FileList(Screen):
         :doc-author: Trelent
         """
         global controller
-        file = filechooser.open_file(filters = [["HDF File (*.hdf)", "*.hdf"]])
+        file = filechooser.open_file(filters = [["HDF File (*.hdf)", "*.hdf", "*.HDF"]])
         if file:
             returnVal = controller.loadProject(file[0])
             if returnVal:
