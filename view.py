@@ -54,8 +54,8 @@ class ImportDatasetData(BoxLayout):
         columnData = self.ids.columnData.text
         startRowData = self.ids.startRowData.text
 
-        if dataGroup in controller.getDataGroups(dataSet):
-            print(controller.getDataGroup(dataSet, dataGroup))
+        #if dataGroup in controller.getDataGroups(dataSet):
+            #print(controller.getDataGroup(dataSet, dataGroup))
 
         validateDatasets = dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroup(dataSet, dataGroup)["unit"])
 
@@ -66,7 +66,7 @@ class ImportDatasetData(BoxLayout):
         columns = [usefulFunctions.column_string(i+1) for i in range(numColumns)]
         validColumns = columnDates in columns and columnData in columns 
         #print(f'columnData = {columnData}, "columnNames = {str(controller.getLoadedDataFrame(self.dataFrame).columns)}')
-        print(f'validateDatasets = {validateDatasets}, validNumbers = {validNumbers}, validColumns = {validColumns}')
+        #print(f'validateDatasets = {validateDatasets}, validNumbers = {validNumbers}, validColumns = {validColumns}')
         self.button.disabled = validateDatasets or not validNumbers or not validColumns
 
 
@@ -315,11 +315,53 @@ class DatasetData(OneLineIconListItem):
     dataGroupDialog = None
     dataGroupListDialog = None
     dataGroupExportDialog = None
+    deleteDataGroupsDialog = None
+
+    def deleteDataGroups(self):
+        global controller
+        
+        def closeDialog(button):
+            self.deleteDataGroupsDialog.dismiss()
+        
+        def finishLoad(button):
+            selectedDataGroups = []
+            successes = 0
+
+            for item in self.deleteDataGroupsDialog.items:
+                if item.ids.check.active:
+                    selectedDataGroups.append(item.text)
+            if(len(selectedDataGroups) > 0):
+                for dataGroup in selectedDataGroups:
+                    successes += controller.deleteDataGroup(self.text, dataGroup)
+                Snackbar(text=f'Successfully Deleted {successes}/{len(selectedDataGroups)} DataGroups!', snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            else:
+                Snackbar(text="No Datagroups Selected!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            closeDialog(None)
+
+        self.deleteDataGroupsDialog = MDDialog(
+        title=f'Please select DataGroups to export from ({self.text})',
+        type="confirmation",
+        items = [SelectDataGroup(text=dataGroup) for dataGroup in controller.getDataGroups(self.text)],
+        auto_dismiss=False,
+        buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_press=closeDialog,
+                ),
+                MDFlatButton(
+                    text="OK",
+                    theme_text_color="Custom",
+                    text_color=App.get_running_app().theme_cls.primary_color,
+                    on_release=finishLoad,
+                )
+            ],
+        )
+        self.deleteDataGroupsDialog.open()
 
     def exportDataGroups(self):
         global controller
-
-        menu = None
         
         def closeDialog(button):
             self.dataGroupExportDialog.dismiss()
@@ -440,7 +482,6 @@ class DatasetData(OneLineIconListItem):
                 "text": "Add DataGroup",
                 "icon": "plus-thick",
                 "height": dp(40),
-                "width": dp(100),
                 "on_press": lambda : self.addDataGroup(),
                 "on_release": lambda : closeMenu()
             },
@@ -449,23 +490,29 @@ class DatasetData(OneLineIconListItem):
                 "text": "List Datagroups",
                 "icon": "format-list-bulleted",
                 "height": dp(40),
-                "width": dp(100),
                 "on_press": lambda : self.listDataGroups(),
                 "on_release": lambda : closeMenu()
             },
             {
                 "viewclass": "OptionRow",
-                "text": "List Datagroups",
+                "text": "Export Datagroups",
                 "icon": "file-export",
                 "height": dp(40),
-                "width": dp(100),
                 "on_press": lambda : self.exportDataGroups(),
                 "on_release": lambda : closeMenu()
-            }
+            },
+            {
+                "viewclass": "OptionRow",
+                "text": "Delete DataGroup",
+                "icon": "delete",
+                "height": dp(40),
+                "on_press": lambda : self.deleteDataGroups(),
+                "on_release": lambda : closeMenu()
+            },
             ]
             self.menu = MDDropdownMenu(
                 items=menu_items,
-                width_mult=3,
+                width_mult=3.75,
             )    
         self.menu.caller = self
         self.menu.open()
@@ -589,7 +636,7 @@ class FileRow(OneLineIconListItem):
             ]
             self.menu = MDDropdownMenu(
                 items=menu_items,
-                width_mult=3,
+                width_mult=3.5,
             )    
         self.menu.caller = self
         self.menu.open()
@@ -618,14 +665,19 @@ class FileRow(OneLineIconListItem):
             dataFrame = controller.getLoadedFile(self.text)
 
             data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
-            dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colData)]]
+            dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
 
-
-            retval = controller.dataToGroup(title, dataSet, dataGroup, subUnit, self.originalPath, data, dates)
+            for index, row in data.iterrows():
+                print(row)
+                if row.iloc[0] == invalidID:
+                    dates.drop(index)
+                    data.drop(index)
+            retval = controller.dataToGroup(title, dataSet, dataGroup, subUnit, self.originalPath, [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
             if retval:
                 Snackbar(text="Data Successfully Imported!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
             else:
                 Snackbar(text="Could not Import Data!", snackbar_x=dp(3), snackbar_y=dp(10), size_hint_x=0.5, duration=1.5).open()
+            closeDialog(None)
 
 
         button = MDFlatButton(

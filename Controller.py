@@ -71,18 +71,6 @@ class Controller:
             self.model.dataSets[dataSet] = {}
             return 1
     
-    def dataToGroup(self, title, dataSet, dataGroup, subUnit, fileName, measurements, dates):
-        if dataSet not in self.model.dataSets:
-            print("This dataSet does not exist")
-            return 0
-        else:
-            if dataGroup not in self.model.dataSets[dataSet]:
-                print("This datagroup does not exist for the dataset " + dataSet)
-                return 0
-            dataGroup = self.model.dataSets[dataSet][dataGroup]
-            dataGroup["data"].append({"source": fileName, "measurements": measurements, "dates": dates})
-            return 1
-    
     def loadFile(self, filePath, fileName):
         if fileName in self.model.loadedFiles or fileName in self.model.dataSets:
             print("A file with this name already exists, please choose another name")
@@ -182,6 +170,29 @@ class Controller:
         else:
             return self.model.dataSets[dataSet][dataGroup]
 
+    def deleteDataGroup(self, dataSet, dataGroup):
+        if dataSet not in self.model.dataSets:
+            print("This dataSet does not exist")
+            return 0
+        if dataGroup in self.model.dataSets[dataSet]:
+            del self.model.dataSets[dataSet][dataGroup]
+            return 1
+        print("This dataGroup is not in this dataSet")
+        return 0
+
+    def dataToGroup(self, title, dataSet, dataGroup, subUnit, fileName, measurements, dates):
+        print(f'dates = {dates}, measurements= {measurements}')
+        if dataSet not in self.model.dataSets:
+            print("This dataSet does not exist")
+            return 0
+        else:
+            if dataGroup not in self.model.dataSets[dataSet]:
+                print("This datagroup does not exist for the dataset " + dataSet)
+                return 0
+            dataGroup = self.model.dataSets[dataSet][dataGroup]
+            dataGroup["data"].append({"source": fileName, "measurements": dict(zip(dates, measurements)), "unit": subUnit})
+            return 1
+
     def addDataGroup(self, dataSet, dataGroup, Unit):
         if dataSet not in self.model.dataSets:
             print("This dataSet does not exist")
@@ -202,18 +213,42 @@ class Controller:
             return self.model.dataSets[dataSet]
 
     def exportDataGroups(self, filePath, dataSet, dataGroups):
+        filePath = checkForExt(filePath, "xlsx")
         if dataSet not in self.model.dataSets:
             print("This is not a valid DataSet")
             return 0
         realDataGroups = self.getDataGroups(dataSet)
-        dataGroupData = {}
+        dataGroupData = []
         for dataGroup in dataGroups:
             if dataGroup not in realDataGroups:
                 print(f'{dataGroup} is not a datagroup in {dataSet}')
                 return 0
             else:
                 dataGroupData.append({"name":dataGroup, "dataGroup": self.getDataGroup(dataSet, dataGroup)})
-        print(dataGroupData)
+        dates = []
+        columns = ["Dates (YYYY-MM-DD)"]
+        rows = []
+        for i, dG in enumerate(dataGroupData):
+            realDG = dG["dataGroup"]["data"][i]
+            dates += realDG["measurements"].keys()
+            columns.append(f'{dG["name"]} ({realDG["unit"]})')
+        dates = list(set(dates))
+        for date in dates:
+            newRow = []
+            newRow.append(date)
+            for i, dG in dataGroupData:
+                realDG = dG["dataGroup"]["data"][i]
+                if date in realDG["measurements"]:
+                    newRow.append(realDG["measurements"][date])
+                else:
+                    newRow.append("N/A")
+            rows.append(newRow)
+        finalFile = DataFrame(rows, columns=columns)
+        finalFile.to_excel(filePath, sheet_name=dataSet)
+        
+        
+        
+
         
     
     
