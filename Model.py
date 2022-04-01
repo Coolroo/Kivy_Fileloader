@@ -126,7 +126,7 @@ def HDFtoDict(path):
             DataDict[sheet]["fileName"] = keyFile.get_storer(sheet).attrs.fileName
         else:
             chemicalDict[sheet] = keyFile[sheet].to_dict()
-            print(chemicalDict[sheet])
+            #print(chemicalDict[sheet])
     keyFile.close()
     return [DataDict, chemicalDict]
 
