@@ -188,7 +188,7 @@
                 MDTextField:
                     size_hint_x: 0.3
                     id: columnDates
-                    hint_text: "Starting column (DATES)"
+                    hint_text: "Column (DATES)"
                     on_text: root.validate()
 
                 MDTextField: 
@@ -204,7 +204,7 @@
                 MDTextField:
                     size_hint_x: 0.3
                     id: columnData
-                    hint_text: "Date column (DATA)"
+                    hint_text: "Column (DATA)"
                     on_text: root.validate()
 
                 MDTextField: 
@@ -368,7 +368,7 @@
     MDTextField:
         id: dialogTextBox
         hint_text: "File Name (No special characters, only numbers and letters)"
-        on_text: root.checkValidity(self.text)
+        on_text: root.checkValidity()
 
 
 <OptionRow>

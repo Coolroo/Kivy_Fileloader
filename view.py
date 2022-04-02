@@ -186,7 +186,10 @@ class ImportDatasetData(BoxLayout):
         validateDatasets = dataSet not in controller.getDataSets() or dataGroup not in controller.getDataGroups(dataSet) or subUnit not in controller.getConfigSubUnits(controller.getDataGroup(dataSet, dataGroup)["unit"])
 
         lenRows = len(controller.getLoadedDataFrame(self.dataFrame))
-        validNumbers = numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit() and int(numRows) > 0 and int(startRowData) + int(numRows) <= lenRows and int(startRowDates) + int(numRows) <= lenRows
+        validNumbers = (numRows.isdigit() and startRowDates.isdigit() and startRowData.isdigit() and int(startRowData) > 0 and int(startRowDates) > 0 and
+        int(numRows) > 0 and int(startRowData) + int(numRows) - 1 <= lenRows and 
+        int(startRowData) + int(numRows) - 1 > 0 and int(startRowDates) + int(numRows) - 1 <= lenRows and 
+        int(startRowDates) + int(numRows) - 1 > 0)
 
         numColumns = len(controller.getLoadedDataFrame(self.dataFrame).columns)
         columns = [usefulFunctions.column_string(i+1) for i in range(numColumns)]
@@ -421,7 +424,6 @@ class PreferencesMenu(BoxLayout):
                             "text": subUnit
                         })'''
 
-
 class DatasetAddDialog(BoxLayout):
     '''The DatasetAddDialog class is used to create a new dataset in a dialog'''
     button = ObjectProperty()
@@ -562,7 +564,7 @@ class ImportFile(BoxLayout):
     button = ObjectProperty()
     Path = StringProperty()
     
-    def checkValidity(self, text):
+    def checkValidity(self):
         """
         The checkValidity function checks if the name provided is a valid 
         
@@ -571,7 +573,7 @@ class ImportFile(BoxLayout):
         
         :doc-author: Trelent
         """
-        self.button.disabled = not (usefulFunctions.isIdentifier(text) or text not in controller.getLoadedFiles())
+        self.button.disabled = not (usefulFunctions.isIdentifier(self.ids.dialogTextBox.text) and self.ids.dialogTextBox.text not in controller.getLoadedFiles())
 
 class OptionRow(OneLineIconListItem):
     '''This is used in menus to display an option'''
@@ -661,9 +663,9 @@ class DatasetData(OneLineIconListItem):
             subUnit = self.bulkImportDialog.content_cls.ids.subUnit.current_item
             numRows = self.bulkImportDialog.content_cls.ids.numRows.text
             columnDates = self.bulkImportDialog.content_cls.ids.columnDates.text
-            startRowDates = self.bulkImportDialog.content_cls.ids.startRowDates.text
+            startRowDates = int(self.bulkImportDialog.content_cls.ids.startRowDates.text) - 1
             columnData = self.bulkImportDialog.content_cls.ids.columnData.text
-            startRowData = self.bulkImportDialog.content_cls.ids.startRowData.text
+            startRowData = int(self.bulkImportDialog.content_cls.ids.startRowData.text) - 1
 
             colData = usefulFunctions.column_string_to_int(columnData)
             colDate = usefulFunctions.column_string_to_int(columnDates)
@@ -673,8 +675,8 @@ class DatasetData(OneLineIconListItem):
                     realFile = controller.getLoadedFile(file, False)
                     dataFrame = realFile["file"]
                     
-                    data = dataFrame.iloc[range(int(startRowData), int(startRowData)+int(numRows) + 1), [int(colData)]]
-                    dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows) + 1), [int(colDate)]]
+                    data = dataFrame.iloc[range(int(startRowData), int(startRowData)+int(numRows)), [int(colData)]]
+                    dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
 
                     retval += controller.dataToGroup(self.text, dataGroup, subUnit, f'{realFile["fileName"]} ({title})', [arr[0] for arr in data.to_numpy().tolist()], [arr[0] for arr in dates.to_numpy().tolist()])
                 except:
@@ -1099,8 +1101,9 @@ class FileRow(OneLineIconListItem):
                 dataFrame = realFile["file"]
                 #print(realFile)
 
-                data = dataFrame.iloc[range(int(startRowData), (int(startRowData)+int(numRows))), [int(colData)]]
-                dates = dataFrame.iloc[range(int(startRowDates), int(startRowDates)+int(numRows)), [int(colDate)]]
+                data = dataFrame.iloc[range(int(startRowData) - 1, (int(startRowData)+int(numRows)) - 1), [int(colData)]]
+                dates = dataFrame.iloc[range(int(startRowDates) - 1, int(startRowDates)+int(numRows) - 1), [int(colDate)]]
+                #print(data)
 
                 #for index, row in data.iterrows():
                     #print(row)

@@ -70,7 +70,7 @@ def loadFile(path):
         raise TypeError()
     return file
 
-def saveDFs(path, dataFrames, chemicalData, config):
+def saveDFs(path, dataFrames, chemicalData):
     """
     The saveDFs function saves a dictionary of dataframes to an HDF5 file.
     

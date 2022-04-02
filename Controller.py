@@ -4,7 +4,8 @@ import os
 from pandas import DataFrame
 from threading import Timer
 from datetime import datetime
-
+from collections import defaultdict
+import itertools 
 
 AUTOSAVE_PATH = os.path.dirname(os.path.realpath(__file__)) + "/AutoSaves/"
 
@@ -233,7 +234,7 @@ class Controller:
         filePath = checkForExt(filePath, "hdf")
         print(f'Attempting save at {filePath}')
         try:
-            Model.saveDFs(filePath, self.model.loadedFiles, self.model.dataSets, self.model.config)
+            Model.saveDFs(filePath, self.model.loadedFiles, self.model.dataSets)
             return 1
         except IOError:
             return 0
@@ -365,7 +366,13 @@ class Controller:
                 print("This datagroup does not exist for the dataset " + dataSet)
                 return 0
             dataGroup = self.model.dataSets[dataSet][dataGroup]
-            dataGroup["data"].append({"source": fileName, "measurements": dict(zip(dates, measurements)), "unit": subUnit})
+            dataDict = defaultdict(list)
+            for date, measurement in itertools.zip_longest(dates, measurements, fillvalue="N/A"):
+                #print(f'Adding {date}')
+                dataDict[date] = measurement
+            dataDict = dict(dataDict)
+            print(f'Imported data using dictionary {dataDict}')
+            dataGroup["data"].append({"source": fileName, "measurements":  dataDict, "unit": subUnit})
             return 1
 
     def addDataGroup(self, dataSet, dataGroup, Unit):
@@ -466,6 +473,7 @@ class Controller:
             rows.append(newRow)
         finalFile = DataFrame(rows, columns=columns)
         finalFile.to_excel(filePath, sheet_name=dataSet)
+        return 1
         
         
         
