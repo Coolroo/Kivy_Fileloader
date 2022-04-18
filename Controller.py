@@ -474,12 +474,6 @@ class Controller:
         finalFile = DataFrame(rows, columns=columns)
         finalFile.to_excel(filePath, sheet_name=dataSet)
         return 1
-        
-        
-        
-
-        
-    
     
 def getFileType(filePath):
     file_name = os.path.basename(filePath)
