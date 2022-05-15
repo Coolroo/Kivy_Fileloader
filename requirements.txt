@@ -20,7 +20,6 @@ kivy-deps.angle==0.3.2; sys_platform == 'win32'
 kivy-deps.glew==0.3.1; sys_platform == 'win32'
 kivy-deps.gstreamer==0.3.3; sys_platform == 'win32'
 kivy-deps.sdl2==0.4.5; sys_platform == 'win32'
-Kivy-examples==2.0.0
 Kivy-Garden==0.1.4
 kivy-garden.filebrowser==1.1.2
 kivymd==0.104.2
@@ -35,7 +34,6 @@ Pillow==9.0.1
 pipreqs==0.4.11
 plyer==2.0.0
 Pygments==2.11.2
-pyinstaller==4.10
 pyinstaller-hooks-contrib==2022.3
 pyparsing==3.0.7
 pypiwin32==223; sys_platform == 'win32'

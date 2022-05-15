@@ -1,5 +1,7 @@
 from Controller import Controller, getFileType
 
+import kivy
+import os, sys
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.properties import StringProperty, ObjectProperty
@@ -26,7 +28,6 @@ from plyer import filechooser
 import pandas as pd
 
 controller = Controller()
-Builder.load_file('AppLayout.kv') 
 
 class BulkImport(BoxLayout):
     '''The BulkImport class is used for a dialog created to import files in bulk'''
@@ -1613,15 +1614,7 @@ class MVCApp(MDApp):
             "height": dp(40),
             "on_press": lambda : self.screen.loadProject(),
             "on_release": lambda : self.closeMenu()
-        },
-        {
-            "viewclass": "OptionRow",
-            "text": "File Manager",
-            "icon": "folder-open",
-            "height": dp(40),
-            "on_press": lambda : self.fileManager(),
-            "on_release": lambda : self.closeMenu()
-        },
+        }
         ]
         self.menu= MDDropdownMenu(
             items=menu_items,
@@ -1714,15 +1707,10 @@ class MVCApp(MDApp):
             ],
         )
         self.confirmDialog.open()
+
+if __name__ == '__main__':
+    kivy.resources.resource_add_path(os.path.join(sys._MEIPASS)) # add this line 
+    #my_app = MVCApp()
     
-    def fileManager(self):
-        if not self.manager:
-            self.file_manager = MDFileManager(
-                exit_manager=self.exit_manager, select_path=self.exit_manager
-            )
-        self.file_manager.show('/')
-    
-    def exit_manager(self, *args):
-        pass    
-        
+Builder.load_file('AppLayout.kv')
 MVCApp().run()
