@@ -22,6 +22,8 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.tooltip import MDTooltip
 from kivymd.uix.datatables import MDDataTable
 
+import tables
+
 
 import usefulFunctions
 from plyer import filechooser
@@ -1590,6 +1592,7 @@ class MVCApp(MDApp):
         
         :doc-author: Trelent
         """
+        self.icon = "MVCIcon.png"
         Window.bind(on_request_close=self.on_request_close)
         menu_items = [{
             "viewclass": "OptionRow",
