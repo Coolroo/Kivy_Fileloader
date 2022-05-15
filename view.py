@@ -1,8 +1,5 @@
 from Controller import Controller, getFileType
 
-import kivy
-import os
-import sys
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.properties import StringProperty, ObjectProperty
@@ -10,7 +7,9 @@ from kivy.uix.screenmanager import Screen
 from kivy.metrics import dp
 from kivy.app import App
 from kivy.core.window import Window
-
+from kivy.uix.modalview import ModalView
+from kivymd.uix.filemanager import MDFileManager
+from kivymd.toast import toast
 
 from kivymd.app import MDApp
 from kivymd.uix.list import OneLineIconListItem, IconLeftWidget, OneLineAvatarIconListItem, OneLineListItem
@@ -19,9 +18,8 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.tooltip import MDTooltip
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.label import MDLabel
 from kivymd.uix.datatables import MDDataTable
+
 
 import usefulFunctions
 from plyer import filechooser
@@ -1524,6 +1522,7 @@ class MVCApp(MDApp):
         super().__init__(**kwargs)
         self.screen = FileList()
         self.exitDialog = None
+        self.manager = None
         
     def on_request_close(self, *args, **kwargs):
         """
@@ -1613,6 +1612,14 @@ class MVCApp(MDApp):
             "icon": "folder-open",
             "height": dp(40),
             "on_press": lambda : self.screen.loadProject(),
+            "on_release": lambda : self.closeMenu()
+        },
+        {
+            "viewclass": "OptionRow",
+            "text": "File Manager",
+            "icon": "folder-open",
+            "height": dp(40),
+            "on_press": lambda : self.fileManager(),
             "on_release": lambda : self.closeMenu()
         },
         ]
@@ -1707,5 +1714,15 @@ class MVCApp(MDApp):
             ],
         )
         self.confirmDialog.open()
+    
+    def fileManager(self):
+        if not self.manager:
+            self.file_manager = MDFileManager(
+                exit_manager=self.exit_manager, select_path=self.exit_manager
+            )
+        self.file_manager.show('/')
+    
+    def exit_manager(self, *args):
+        pass    
         
 MVCApp().run()
